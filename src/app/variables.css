@@ -1,0 +1,58 @@
+:root {
+  --color-accent: #00b5ce;
+  --color-bg: #fbfbf8;
+  --color-surface: #ffffff;
+  --color-ink: #111111;
+  --color-ink-soft: rgba(17, 17, 17, 0.72);
+
+  /* Interaction — shared hover/focus color shifts (see .interactive in globals.css) */
+  --ease-interaction: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-interaction: 160ms;
+  --color-interactive-ink-hover: color-mix(in srgb, var(--color-ink) 82%, var(--color-accent) 18%);
+  --color-interactive-accent-hover: color-mix(in srgb, var(--color-accent) 78%, #000000);
+  --color-interactive-inverse-bg-hover: color-mix(in srgb, var(--color-ink) 84%, #ffffff);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-panel-enter: 240ms;
+  --landing-info-frost-bg: rgba(255, 255, 255, 0.24);
+  --landing-info-frost-blur: 12px;
+  --landing-info-panel-pad: 1.25rem;
+  --landing-info-panel-toggle-reserve: 3.25rem;
+  --landing-info-toggle-offset-x: 10px;
+  --landing-info-toggle-offset-y: 14px;
+
+  /* Drawn underline: `.text-link--drawn` + nav `.link-underline` (see globals.css) */
+  --color-text-link: var(--color-ink);
+  --link-underline-duration: 300ms;
+  --ease-link-underline: cubic-bezier(0.23, 1, 0.32, 1);
+
+  --page-pad-x: clamp(0.5rem, 1vw, 1rem);
+  --page-pad-y: clamp(0.65rem, 1.5vw, 1rem);
+  /* Same as `.experience__shell` gap — space between header block and main on mobile landing. */
+  --experience-shell-gap: clamp(1rem, 1.4vw, 1.6rem);
+  --nav-size: .75rem;
+  --topic-detail-title-size: clamp(1.35rem, 2.4vw, 2.25rem);
+
+  --marquee-gap: clamp(1rem, 1.8vw, 1.9rem);
+  /* Row height is fixed; each frame’s width follows that image’s aspect ratio (no max width). */
+  --marquee-item-height: clamp(21.84rem, 34.32vw, 31.2rem);
+  --marquee-speed: 34;
+  --marquee-ease: 0.085;
+
+  --sticky-bottom: max(1rem, env(safe-area-inset-bottom));
+  /* Matches .sticky-register — landing bottom padding uses this so footer aligns with CTA */
+  --sticky-cta-bottom: calc(var(--sticky-bottom) + 0.15rem);
+  --landing-floating-bottom: max(1.375rem, calc(env(safe-area-inset-bottom) + 0.25rem));
+  /* Persistent register / Back — one offset for landing, topic, and signup (no vertical jump on route change) */
+  --register-cta-bottom: var(--landing-floating-bottom);
+  /*
+    Mobile landing (≤720px): measured header stack; matches .experience__main offset in globals.css.
+    Marquee strip height matches .marquee__item in that breakpoint.
+  */
+  --landing-mobile-header-height: 98px;
+  /* Taller strip on ≤720px */
+  --landing-mobile-marquee-item-height: clamp(24rem, 111vw, 35rem);
+  /* Bottom register / Back pill — matches collapsed `.landing-info-panel` footprint (≤720px only in globals) */
+  --landing-mobile-cta-height: 48px;
+  --landing-mobile-cta-font-size: 0.8125rem;
+}
