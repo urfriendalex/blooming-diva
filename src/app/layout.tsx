@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { Inter, Pinyon_Script } from "next/font/google";
 
-import { ColorSchemeSwitcher } from "@/components/color-scheme-switcher";
 import { siteContent } from "@/lib/site-content";
-import { COLOR_SCHEME } from "@/lib/theme";
 
 import "./variables.css";
 import "./globals.css";
@@ -62,10 +60,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" data-color-scheme={COLOR_SCHEME} suppressHydrationWarning>
+    <html lang="ru">
       <body className={`${bodyFont.variable} ${titleFont.variable}`}>
         {children}
-        <ColorSchemeSwitcher />
         <Analytics />
       </body>
     </html>

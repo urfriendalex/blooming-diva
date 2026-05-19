@@ -8,6 +8,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { revealAfterLines } from "@/lib/reveal-hierarchy";
 import {
+  DURATION_TRANSFORM_S,
   EASE_TRANSFORM,
   GRID_IMAGE_INITIAL_BLUR_PX,
   GRID_IMAGE_INITIAL_OPACITY,
@@ -46,6 +47,10 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
   const [columns, setColumns] = useState<GridColumnCount>(3);
   const [isMobile, setIsMobile] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  /** Keeps grid row height when the switch becomes `position: fixed` on scroll. */
+  const [pinnedSlotSize, setPinnedSlotSize] = useState<{ width: number; height: number } | null>(
+    null,
+  );
   const imageListKey = images.join("\0");
   const columnOptions: GridColumnCount[] = isMobile ? [1, 2] : [2, 3, 4];
 
@@ -60,6 +65,7 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
         switchTransitionRect.current = switchRef.current?.getBoundingClientRect() ?? null;
         pinnedRef.current = false;
         setIsPinned(false);
+        setPinnedSlotSize(null);
       }
     };
 
@@ -82,7 +88,14 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
         return;
       }
 
-      switchTransitionRect.current = switchRef.current?.getBoundingClientRect() ?? null;
+      const switchEl = switchRef.current;
+      switchTransitionRect.current = switchEl?.getBoundingClientRect() ?? null;
+      if (nextPinned && switchEl) {
+        const { width, height } = switchEl.getBoundingClientRect();
+        setPinnedSlotSize({ width, height });
+      } else {
+        setPinnedSlotSize(null);
+      }
       pinnedRef.current = nextPinned;
       setIsPinned(nextPinned);
     };
@@ -163,6 +176,7 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
 
   useLayoutEffect(() => {
     const root = gridRef.current;
+    const switchEl = switchRef.current;
     if (!root || images.length === 0) {
       return;
     }
@@ -182,6 +196,12 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
           opacity: 1,
           clearProps: "transform,filter",
         });
+        if (switchEl) {
+          gsap.set(switchEl, {
+            opacity: 1,
+            clearProps: "transform,filter",
+          });
+        }
         return;
       }
 
@@ -195,22 +215,46 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
         force3D: true,
       });
 
+      if (switchEl) {
+        gsap.set(switchEl, {
+          opacity: GRID_IMAGE_INITIAL_OPACITY,
+          yPercent: 5,
+          scale: 0.98,
+          transformOrigin: "50% 50%",
+          filter: `blur(${Math.max(4, GRID_IMAGE_INITIAL_BLUR_PX - 2)}px)`,
+          force3D: true,
+        });
+      }
+
       let played = false;
       const play = () => {
         if (played) {
           return;
         }
         played = true;
+        const delay = revealAfterLines(firstLineIndex);
         gsap.to(imgs, {
           opacity: 1,
           yPercent: 0,
           scale: 1,
           filter: "blur(0px)",
           duration: GRID_IMAGE_REVEAL_DURATION_S,
-          delay: revealAfterLines(firstLineIndex),
+          delay,
           ease: EASE_TRANSFORM,
           force3D: true,
         });
+        if (switchEl) {
+          gsap.to(switchEl, {
+            opacity: 1,
+            yPercent: 0,
+            scale: 1,
+            filter: "blur(0px)",
+            duration: DURATION_TRANSFORM_S,
+            delay,
+            ease: EASE_TRANSFORM,
+            force3D: true,
+          });
+        }
       };
 
       const observer = new IntersectionObserver(
@@ -268,13 +312,22 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
     changeColumns(nextColumns);
   };
 
+  const pinnedSlotStyle: CSSProperties | undefined =
+    isPinned && !isMobile && pinnedSlotSize
+      ? {
+          width: pinnedSlotSize.width,
+          height: pinnedSlotSize.height,
+        }
+      : undefined;
+
   return (
     <div className="topic-detail__grid-block">
-      <div
-        ref={switchRef}
-        className={`topic-detail__grid-switch${isPinned && !isMobile ? " topic-detail__grid-switch--pinned" : ""}`}
-        aria-label="Количество фото в ряду"
-      >
+      <div className="topic-detail__grid-switch-slot" style={pinnedSlotStyle}>
+        <div
+          ref={switchRef}
+          className={`topic-detail__grid-switch${isPinned && !isMobile ? " topic-detail__grid-switch--pinned" : ""}`}
+          aria-label="Количество фото в ряду"
+        >
         {isMobile ? (
           <button
             type="button"
@@ -301,6 +354,7 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
             </button>
           ))
         )}
+        </div>
       </div>
 
       <div
