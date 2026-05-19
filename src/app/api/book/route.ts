@@ -9,7 +9,7 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message || "Invalid contact payload." },
+        { error: parsed.error.issues[0]?.message || "Проверьте данные формы." },
         { status: 400 },
       );
     }
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Something went wrong while submitting your request.";
+      error instanceof Error ? error.message : "Не удалось отправить заявку. Попробуйте еще раз.";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }

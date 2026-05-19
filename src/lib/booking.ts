@@ -4,14 +4,14 @@ export const bookingSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Please enter your name.")
-    .max(100, "Name is too long."),
-  email: z.email("Please enter a valid email address."),
+    .min(2, "Введите ваше имя.")
+    .max(100, "Имя слишком длинное."),
+  email: z.email("Введите корректный email."),
   instagram: z
     .string()
     .trim()
-    .min(2, "Please enter your Instagram handle.")
-    .max(100, "Instagram handle is too long."),
+    .min(2, "Введите ваш Instagram.")
+    .max(100, "Instagram слишком длинный."),
 });
 
 export type BookingPayload = z.infer<typeof bookingSchema>;
@@ -38,11 +38,11 @@ export async function sendBookingEmail(payload: BookingPayload) {
   const result = await resend.emails.send({
     from,
     to: [bookingEmailTo],
-    subject: `New Blooming Diva contact: ${payload.name}`,
+    subject: `Новая заявка BLOOMING DIVA: ${payload.name}`,
     text: [
-      "New contact request",
+      "Новая заявка на BLOOMING DIVA PHOTO DAY",
       "",
-      `Name: ${payload.name}`,
+      `Имя: ${payload.name}`,
       `Email: ${payload.email}`,
       `Instagram: ${payload.instagram}`,
     ].join("\n"),
@@ -62,8 +62,8 @@ export async function sendBookingTelegram(payload: BookingPayload) {
   const chatId = getRequiredEnv("TELEGRAM_CHAT_ID");
 
   const text = [
-    "New contact request",
-    `Name: ${payload.name}`,
+    "Новая заявка на BLOOMING DIVA PHOTO DAY",
+    `Имя: ${payload.name}`,
     `Email: ${payload.email}`,
     `Instagram: ${payload.instagram}`,
   ].join("\n");

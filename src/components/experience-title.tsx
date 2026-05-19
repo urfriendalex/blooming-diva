@@ -11,14 +11,30 @@ import {
   useState,
 } from "react";
 
-import { splitGraphemeClusters } from "@/lib/grapheme-segments";
-
 gsap.registerPlugin(Flip);
+
+const TITLE_INTRO_FROM = {
+  opacity: 0,
+  scale: 0.9,
+  z: -48,
+  filter: "blur(8px)",
+  transformOrigin: "50% 50%",
+  force3D: true,
+} as const;
+
+const TITLE_INTRO_TO = {
+  opacity: 1,
+  scale: 1,
+  z: 0,
+  filter: "blur(0px)",
+  duration: 1.05,
+  ease: "power2.out",
+} as const;
 
 type ExperienceTitleProps = {
   label: string;
   onClick: () => void;
-  /** When true, run the intro: centered mask reveal, then Flip to header after window load. */
+  /** When true, run the intro: centered reveal, then Flip to header after window load. */
   preloader?: boolean;
   /** Fired once the Flip-to-header animation finishes. */
   onPreloaderComplete?: () => void;
@@ -65,6 +81,15 @@ function waitForWindowLoad(): Promise<void> {
   });
 }
 
+/** Match header bleed geometry so intro doesn’t re-center text (avoids a left jump on Flip). */
+function getBleedFrame(bleed: HTMLElement) {
+  const rect = bleed.getBoundingClientRect();
+  return {
+    left: rect.left,
+    width: rect.width,
+  };
+}
+
 function ExperienceTitleComponent({
   label,
   onClick,
@@ -93,7 +118,7 @@ function ExperienceTitleComponent({
     const styles = window.getComputedStyle(button);
     const paddingX =
       Number.parseFloat(styles.paddingLeft) + Number.parseFloat(styles.paddingRight);
-    const target = bleed.clientWidth - paddingX;
+    const target = (bleed.clientWidth - paddingX) * 0.985;
     if (target < 32) {
       return;
     }
@@ -133,14 +158,18 @@ function ExperienceTitleComponent({
     if (!preloader) {
       scheduleIntroSurface(false);
       const button = buttonRef.current;
+      const track = button?.querySelector<HTMLElement>(".experience__title-reveal-track");
+      const clip = button?.querySelector<HTMLElement>(".experience__title-reveal-clip");
       if (button) {
         gsap.killTweensOf(button);
-        const inners = button.querySelectorAll<HTMLElement>(
-          ".experience__title-reveal-track .experience__title-char-inner",
-        );
-        gsap.killTweensOf(inners);
         gsap.set(button, { clearProps: "opacity,visibility" });
-        gsap.set(inners, { clearProps: "transform" });
+      }
+      if (clip) {
+        gsap.set(clip, { clearProps: "perspective" });
+      }
+      if (track) {
+        gsap.killTweensOf(track);
+        gsap.set(track, { clearProps: "opacity,transform,filter,transformOrigin" });
       }
       introStartedRef.current = false;
       introFinishedRef.current = false;
@@ -152,7 +181,9 @@ function ExperienceTitleComponent({
 
     const bleed = bleedRef.current;
     const button = buttonRef.current;
-    if (!bleed || !button) {
+    const track = button?.querySelector<HTMLElement>(".experience__title-reveal-track");
+    const clip = button?.querySelector<HTMLElement>(".experience__title-reveal-clip");
+    if (!bleed || !button || !track || !clip) {
       return;
     }
 
@@ -181,29 +212,28 @@ function ExperienceTitleComponent({
 
         bleed.classList.add("experience__title-bleed--preloader-slot");
 
-        const inners = button.querySelectorAll<HTMLElement>(
-          ".experience__title-reveal-track .experience__title-char-inner",
-        );
-
-        /* Mask glyphs below the line before the button becomes visible — avoids one frame of full text. */
+        /* Depth reveal: scale + blur toward camera (center origin), no xy translate. */
         if (reduceMotion) {
-          gsap.set(inners, { yPercent: 0 });
+          gsap.set(clip, { clearProps: "perspective" });
+          gsap.set(track, { opacity: 1, scale: 1, z: 0, filter: "blur(0px)" });
         } else {
-          gsap.set(inners, { yPercent: 110 });
+          gsap.set(clip, { perspective: 1100 });
+          gsap.set(track, TITLE_INTRO_FROM);
         }
 
         flushSync(() => {
           setIntroSurface(true);
         });
 
+        const bleedFrame = getBleedFrame(bleed);
         gsap.set(button, {
           position: "fixed",
-          left: "50%",
+          left: bleedFrame.left,
           top: "50%",
-          xPercent: -50,
           yPercent: -50,
-          width: "100vw",
-          textAlign: "center",
+          width: bleedFrame.width,
+          textAlign: "left",
+          boxSizing: "border-box",
           zIndex: 10050,
           opacity: 1,
         });
@@ -212,18 +242,15 @@ function ExperienceTitleComponent({
           return;
         }
 
-        if (reduceMotion) {
-          /* already at 0 */
-        } else {
+        if (!reduceMotion) {
           await new Promise<void>((resolve) => {
-            gsap.to(inners, {
-              yPercent: 0,
-              duration: 0.4125,
-              stagger: 0.02625,
-              ease: "power2.out",
+            gsap.to(track, {
+              ...TITLE_INTRO_TO,
               onComplete: resolve,
             });
           });
+          gsap.set(track, { clearProps: "transform,filter,transformOrigin" });
+          gsap.set(clip, { clearProps: "perspective" });
         }
         if (cancelled) {
           return;
@@ -234,13 +261,19 @@ function ExperienceTitleComponent({
           return;
         }
 
-        /** Record centered/fixed layout, then snap to natural header in the DOM; Flip animates from center → header. */
+        const bleedFrameBeforeFlip = getBleedFrame(bleed);
+        gsap.set(button, {
+          left: bleedFrameBeforeFlip.left,
+          width: bleedFrameBeforeFlip.width,
+        });
+
+        /** Record fixed intro layout, then snap to natural header in the DOM; Flip animates into place. */
         const state = Flip.getState(button);
 
         bleed.classList.remove("experience__title-bleed--preloader-slot");
         gsap.set(button, {
           clearProps:
-            "position,left,top,width,textAlign,zIndex,xPercent,yPercent,transform",
+            "position,left,top,width,textAlign,boxSizing,zIndex,xPercent,yPercent,transform",
         });
         gsap.set(button, { opacity: 1 });
 
@@ -253,7 +286,7 @@ function ExperienceTitleComponent({
             introFinishedRef.current = true;
             gsap.set(button, { clearProps: "transform" });
             gsap.set(button, { opacity: 1 });
-            /* After title has finished moving into the header, parent reveals the rest of the page. */
+            gsap.set(track, { clearProps: "opacity,transform,filter" });
             onPreloaderComplete?.();
           },
         });
@@ -283,15 +316,7 @@ function ExperienceTitleComponent({
         aria-label={label}
       >
         <span className="experience__title-reveal-clip">
-          <span className="experience__title-reveal-track">
-            {splitGraphemeClusters(label).map((ch, i) => (
-              <span key={`${i}-${ch}`} className="experience__title-char">
-                <span className="experience__title-char-inner">
-                  {ch === " " ? "\u00a0" : ch}
-                </span>
-              </span>
-            ))}
-          </span>
+          <span className="experience__title-reveal-track">{label}</span>
         </span>
       </button>
     </div>

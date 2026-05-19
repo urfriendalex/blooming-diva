@@ -73,14 +73,14 @@ export function BookingForm({ revealBaseLines = 0 }: BookingFormProps) {
     if (!response.ok) {
       setState({
         status: "error",
-        message: result.error || "Submission failed. Please try again.",
+        message: result.error || "Не удалось отправить заявку. Попробуйте еще раз.",
       });
       return;
     }
 
     setState({
       status: "success",
-      message: result.message || "We will get back to you shortly.",
+      message: result.message || "Мы свяжемся с вами в ближайшее время.",
     });
   }
 

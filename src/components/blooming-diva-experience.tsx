@@ -107,23 +107,13 @@ export function BloomingDivaExperience({
     return { locationDelay, dateDelay, priceDelay };
   }, [content.location, content.date]);
 
-  const landingFooterReveal = useMemo(() => {
+  const landingRegisterRevealDelay = useMemo(() => {
     let c = 0;
-    const intro: { paragraph: string; blockDelay: number }[] = [];
     for (const paragraph of content.introText) {
-      const blockDelay = revealAfterLines(c);
-      intro.push({ paragraph, blockDelay });
       c += estimateLineCount(paragraph);
     }
-    const registerDelay = revealAfterLines(c);
-    c += estimateLineCount(content.registerLabel);
-    const info: { line: string; blockDelay: number }[] = [];
-    for (const line of content.infoLines) {
-      info.push({ line, blockDelay: revealAfterLines(c) });
-      c += estimateLineCount(line);
-    }
-    return { intro, registerDelay, info };
-  }, [content.introText, content.registerLabel, content.infoLines]);
+    return revealAfterLines(c);
+  }, [content.introText]);
 
   const signupViewReveal = useMemo(() => {
     const introParagraph = content.signup.intro.join(" ");
@@ -213,7 +203,7 @@ export function BloomingDivaExperience({
 
     return initialMode !== "landing" && initialMode !== "signup" && topicReveal
       ? revealAfterLines(topicReveal.stickyLineIndex)
-      : landingFooterReveal.registerDelay;
+      : landingRegisterRevealDelay;
   });
 
   const applyMode = useCallback(
@@ -313,11 +303,11 @@ export function BloomingDivaExperience({
     applyMode("landing", { updateUrl: true });
   }, [applyMode]);
 
-  const closeLandingInfo = useCallback(() => {
-    setIsLandingInfoOpen(false);
-  }, []);
-
   const toggleLandingInfo = useCallback(() => {
+    if (!window.matchMedia("(max-width: 720px)").matches) {
+      return;
+    }
+
     setIsLandingInfoOpen((current) => !current);
   }, []);
 
@@ -417,33 +407,21 @@ export function BloomingDivaExperience({
   }, [activeMode]);
 
   useEffect(() => {
-    if (!isLandingInfoOpen) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsLandingInfoOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isLandingInfoOpen]);
-
-  /** Mobile footer sheet (≤720px): dismiss when tapping outside the panel; matches `globals.css` breakpoint. */
-  useEffect(() => {
     if (!isLandingInfoOpen || activeMode !== "landing") {
       return;
     }
 
     const mobileLandingInfoMq = window.matchMedia("(max-width: 720px)");
 
+    const handleMediaChange = () => {
+      if (!mobileLandingInfoMq.matches) {
+        setIsLandingInfoOpen(false);
+      }
+    };
+
     const handlePointerDown = (event: PointerEvent) => {
       if (!mobileLandingInfoMq.matches) {
+        setIsLandingInfoOpen(false);
         return;
       }
 
@@ -459,9 +437,11 @@ export function BloomingDivaExperience({
 
     const listenerOptions: AddEventListenerOptions = { capture: true, passive: false };
     document.addEventListener("pointerdown", handlePointerDown, listenerOptions);
+    mobileLandingInfoMq.addEventListener("change", handleMediaChange);
 
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown, listenerOptions);
+      mobileLandingInfoMq.removeEventListener("change", handleMediaChange);
     };
   }, [activeMode, isLandingInfoOpen]);
 
@@ -1102,53 +1082,6 @@ export function BloomingDivaExperience({
                   </div>
                 </div>
 
-                <div className="landing-panel__footer">
-                  <div className="landing-panel__description">
-                    {landingFooterReveal.intro.map(({ paragraph, blockDelay }, index) => (
-                      <TextReveal
-                        key={`landing-intro-${index}`}
-                        text={paragraph}
-                        blockDelay={blockDelay}
-                        renderLine={
-                          paragraph.includes(STUDIO_ISKRA_MARKER)
-                            ? renderStudioIskraInLine
-                            : undefined
-                        }
-                      />
-                    ))}
-                  </div>
-
-                  <div className="landing-panel__footer-sentinel" aria-hidden="true" />
-
-                  <div className="landing-panel__info">
-                    {landingFooterReveal.info.map(({ line, blockDelay }) => {
-                      const ig = line.match(/^@([a-zA-Z0-9._]+)$/);
-                      return (
-                        <p key={line}>
-                          <TextReveal
-                            as="span"
-                            text={line}
-                            blockDelay={blockDelay}
-                            {...(ig
-                              ? {
-                                  renderLine: (t: string) => (
-                                    <a
-                                      className="text-link text-link--drawn"
-                                      href={`https://www.instagram.com/${ig[1]}/`}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                    >
-                                      {t}
-                                    </a>
-                                  ),
-                                }
-                              : {})}
-                          />
-                        </p>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
             )}
           </section>
@@ -1215,7 +1148,7 @@ export function BloomingDivaExperience({
           <button
             className="landing-info-panel__toggle interactive"
             type="button"
-            aria-label={isLandingInfoOpen ? "Collapse footer details" : "Expand footer details"}
+            aria-label={isLandingInfoOpen ? "Hide footer details" : "Show footer details"}
             aria-controls="landing-info-panel-body"
             aria-expanded={isLandingInfoOpen}
             onClick={toggleLandingInfo}
@@ -1223,54 +1156,50 @@ export function BloomingDivaExperience({
             <span className="landing-info-panel__toggle-icon" aria-hidden="true" />
           </button>
 
-          {isLandingInfoOpen ? (
-            <div id="landing-info-panel-body" className="landing-info-panel__body">
-              <div className="landing-info-panel__description">
-                {landingInfoOverlayReveal.introParagraphs.map(({ paragraph, blockDelay }, index) => (
-                  <TextReveal
-                    key={`info-intro-${index}`}
-                    text={paragraph}
-                    blockDelay={blockDelay}
-                    renderLine={
-                      paragraph.includes(STUDIO_ISKRA_MARKER)
-                        ? renderStudioIskraInLine
-                        : undefined
-                    }
-                  />
-                ))}
-              </div>
-
-              <div className="landing-info-panel__info">
-                {landingInfoOverlayReveal.info.map(({ line, blockDelay }) => {
-                  const ig = line.match(/^@([a-zA-Z0-9._]+)$/);
-
-                  return (
-                    <TextReveal
-                      key={`overlay-${line}`}
-                      as="p"
-                      className="landing-info-panel__info-line"
-                      text={line}
-                      blockDelay={blockDelay}
-                      {...(ig
-                        ? {
-                            renderLine: (t: string) => (
-                              <a
-                                className="text-link text-link--drawn landing-info-panel__info-link"
-                                href={`https://www.instagram.com/${ig[1]}/`}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                {t}
-                              </a>
-                            ),
-                          }
-                        : {})}
-                    />
-                  );
-                })}
-              </div>
+          <div id="landing-info-panel-body" className="landing-info-panel__body">
+            <div className="landing-info-panel__description">
+              {landingInfoOverlayReveal.introParagraphs.map(({ paragraph, blockDelay }, index) => (
+                <TextReveal
+                  key={`info-intro-${index}`}
+                  text={paragraph}
+                  blockDelay={blockDelay}
+                  renderLine={
+                    paragraph.includes(STUDIO_ISKRA_MARKER) ? renderStudioIskraInLine : undefined
+                  }
+                />
+              ))}
             </div>
-          ) : null}
+
+            <div className="landing-info-panel__info">
+              {landingInfoOverlayReveal.info.map(({ line, blockDelay }) => {
+                const ig = line.match(/^@([a-zA-Z0-9._]+)$/);
+
+                return (
+                  <TextReveal
+                    key={`overlay-${line}`}
+                    as="p"
+                    className="landing-info-panel__info-line"
+                    text={line}
+                    blockDelay={blockDelay}
+                    {...(ig
+                      ? {
+                          renderLine: (t: string) => (
+                            <a
+                              className="text-link text-link--drawn landing-info-panel__info-link"
+                              href={`https://www.instagram.com/${ig[1]}/`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {t}
+                            </a>
+                          ),
+                        }
+                      : {})}
+                  />
+                );
+              })}
+            </div>
+          </div>
         </div>
       ) : null}
       {headerMetaCursorPos
