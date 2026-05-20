@@ -4,6 +4,8 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -24,6 +26,8 @@ body {
     "cv11" 1;
   letter-spacing: -0.014em;
   text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -641,6 +645,8 @@ button.experience__meta--cta:focus-visible {
   margin: 0;
   min-width: 0;
   white-space: pre-line;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .text-reveal__line {
