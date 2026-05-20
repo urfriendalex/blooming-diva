@@ -539,17 +539,15 @@ export function BloomingDivaExperience({
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let previousTime = performance.now();
     let groupWidth = 0;
-    let groupGap = 0;
     track.style.transform = "";
 
     const applyTransform = () => {
-      const groupStride = groupWidth + groupGap;
-      if (groupStride === 0) {
+      if (groupWidth === 0) {
         return;
       }
 
       groups.forEach((groupEl, index) => {
-        const x = (index - MARQUEE_CENTER_GROUP_INDEX) * groupStride - marqueePhaseRef.current;
+        const x = (index - MARQUEE_CENTER_GROUP_INDEX) * groupWidth - marqueePhaseRef.current;
         groupEl.style.transform = `translate3d(${x}px, 0, 0)`;
       });
     };
@@ -560,23 +558,16 @@ export function BloomingDivaExperience({
       const measuredGroup = marqueeGroupRef.current;
       if (measuredGroup) {
         groupWidth = measuredGroup.getBoundingClientRect().width;
-        const groupStyles = getComputedStyle(measuredGroup);
-        groupGap =
-          Number.parseFloat(groupStyles.columnGap || groupStyles.gap || "0") ||
-          Number.parseFloat(groupStyles.gap || "0") ||
-          0;
       } else {
         groupWidth = group.scrollWidth;
-        groupGap = 0;
       }
 
-      const groupStride = groupWidth + groupGap;
-      if (groupStride === 0) {
+      if (groupWidth === 0) {
         return;
       }
 
       track.style.height = `${group.getBoundingClientRect().height}px`;
-      marqueePhaseRef.current = normalizeMarqueePhase(marqueePhaseRef.current, groupStride);
+      marqueePhaseRef.current = normalizeMarqueePhase(marqueePhaseRef.current, groupWidth);
       applyTransform();
     };
 
@@ -604,10 +595,9 @@ export function BloomingDivaExperience({
         speedRef.current = 0;
       }
 
-      const groupStride = groupWidth + groupGap;
-      if (groupStride > 0 && speedRef.current !== 0) {
+      if (groupWidth > 0 && speedRef.current !== 0) {
         marqueePhaseRef.current += speedRef.current * delta;
-        marqueePhaseRef.current = normalizeMarqueePhase(marqueePhaseRef.current, groupStride);
+        marqueePhaseRef.current = normalizeMarqueePhase(marqueePhaseRef.current, groupWidth);
       }
 
       applyTransform();
@@ -1038,6 +1028,7 @@ export function BloomingDivaExperience({
                 </div>
 
                 <SectionGridImages
+                  key={activeContent.key}
                   images={topicImages[activeContent.key]}
                   firstLineIndex={topicReveal.gridFirstLineIndex}
                 />

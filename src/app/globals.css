@@ -383,6 +383,10 @@ input {
   text-align: inherit;
 }
 
+.experience__title--intro-surface .experience__title-reveal-track {
+  will-change: transform, opacity, filter;
+}
+
 .experience__title-bleed--preloader-slot {
   min-height: clamp(4rem, 18vw, 9rem);
 }
@@ -579,6 +583,8 @@ button.experience__meta--cta:focus-visible {
   flex-direction: row;
   flex-wrap: nowrap;
   gap: var(--marquee-gap);
+  /* Match inter-item gap where duplicated groups meet (flex gap does not apply across groups). */
+  padding-right: var(--marquee-gap);
   will-change: transform;
 }
 
@@ -1667,7 +1673,8 @@ button.experience__meta--cta:focus-visible {
     top: auto;
     left: max(0.875rem, env(safe-area-inset-left));
     right: auto;
-    bottom: calc(var(--landing-floating-bottom) + var(--landing-mobile-cta-height) + 0.75rem);
+    /* Same baseline as `.landing-panel__cta` / register pill (48px chip height). */
+    bottom: var(--register-cta-bottom);
     z-index: 10130;
     width: var(--landing-frost-chip-height);
     height: var(--landing-frost-chip-height);

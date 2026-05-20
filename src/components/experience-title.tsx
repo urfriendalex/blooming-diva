@@ -3,33 +3,36 @@
 import { gsap } from "gsap";
 import { Flip } from "gsap/Flip";
 import { flushSync } from "react-dom";
-import {
-  memo,
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { memo, useCallback, useLayoutEffect, useRef, useState } from "react";
 
 gsap.registerPlugin(Flip);
 
 const TITLE_INTRO_FROM = {
   opacity: 0,
-  scale: 0.9,
-  z: -48,
-  filter: "blur(8px)",
+  scale: 0.94,
+  z: -28,
+  filter: "blur(10px)",
   transformOrigin: "50% 50%",
   force3D: true,
 } as const;
 
-const TITLE_INTRO_TO = {
-  opacity: 1,
-  scale: 1,
-  z: 0,
-  filter: "blur(0px)",
-  duration: 1.05,
-  ease: "power2.out",
-} as const;
+/** Stagger opacity/blur ahead of depth so the reveal eases in rather than popping. */
+function animateTitleIntro(track: HTMLElement): Promise<void> {
+  return new Promise((resolve) => {
+    gsap
+      .timeline({
+        defaults: { force3D: true, transformOrigin: "50% 50%" },
+        onComplete: resolve,
+      })
+      .to(track, { opacity: 1, duration: 0.62, ease: "power2.out" }, 0)
+      .to(track, { filter: "blur(0px)", duration: 0.88, ease: "power2.out" }, 0.05)
+      .to(
+        track,
+        { scale: 1, z: 0, duration: 1.08, ease: "power3.out" },
+        0,
+      );
+  });
+}
 
 type ExperienceTitleProps = {
   label: string;
@@ -111,13 +114,16 @@ function ExperienceTitleComponent({
   const applyFit = useCallback(() => {
     const bleed = bleedRef.current;
     const button = buttonRef.current;
-    const track = button?.querySelector<HTMLElement>(".experience__title-reveal-track");
+    const track = button?.querySelector<HTMLElement>(
+      ".experience__title-reveal-track",
+    );
     if (!bleed || !button || !track) {
       return;
     }
     const styles = window.getComputedStyle(button);
     const paddingX =
-      Number.parseFloat(styles.paddingLeft) + Number.parseFloat(styles.paddingRight);
+      Number.parseFloat(styles.paddingLeft) +
+      Number.parseFloat(styles.paddingRight);
     const target = (bleed.clientWidth - paddingX) * 0.985;
     if (target < 32) {
       return;
@@ -158,8 +164,12 @@ function ExperienceTitleComponent({
     if (!preloader) {
       scheduleIntroSurface(false);
       const button = buttonRef.current;
-      const track = button?.querySelector<HTMLElement>(".experience__title-reveal-track");
-      const clip = button?.querySelector<HTMLElement>(".experience__title-reveal-clip");
+      const track = button?.querySelector<HTMLElement>(
+        ".experience__title-reveal-track",
+      );
+      const clip = button?.querySelector<HTMLElement>(
+        ".experience__title-reveal-clip",
+      );
       if (button) {
         gsap.killTweensOf(button);
         gsap.set(button, { clearProps: "opacity,visibility" });
@@ -169,7 +179,9 @@ function ExperienceTitleComponent({
       }
       if (track) {
         gsap.killTweensOf(track);
-        gsap.set(track, { clearProps: "opacity,transform,filter,transformOrigin" });
+        gsap.set(track, {
+          clearProps: "opacity,transform,filter,transformOrigin",
+        });
       }
       introStartedRef.current = false;
       introFinishedRef.current = false;
@@ -181,8 +193,12 @@ function ExperienceTitleComponent({
 
     const bleed = bleedRef.current;
     const button = buttonRef.current;
-    const track = button?.querySelector<HTMLElement>(".experience__title-reveal-track");
-    const clip = button?.querySelector<HTMLElement>(".experience__title-reveal-clip");
+    const track = button?.querySelector<HTMLElement>(
+      ".experience__title-reveal-track",
+    );
+    const clip = button?.querySelector<HTMLElement>(
+      ".experience__title-reveal-clip",
+    );
     if (!bleed || !button || !track || !clip) {
       return;
     }
@@ -205,7 +221,9 @@ function ExperienceTitleComponent({
         if (cancelled) {
           return;
         }
-        await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+        await new Promise<void>((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => r())),
+        );
         if (cancelled) {
           return;
         }
@@ -243,12 +261,7 @@ function ExperienceTitleComponent({
         }
 
         if (!reduceMotion) {
-          await new Promise<void>((resolve) => {
-            gsap.to(track, {
-              ...TITLE_INTRO_TO,
-              onComplete: resolve,
-            });
-          });
+          await animateTitleIntro(track);
           gsap.set(track, { clearProps: "transform,filter,transformOrigin" });
           gsap.set(clip, { clearProps: "perspective" });
         }

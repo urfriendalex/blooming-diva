@@ -21,15 +21,6 @@ gsap.registerPlugin(Flip);
 
 type GridColumnCount = 1 | 2 | 3 | 4;
 
-function isElementInViewport(el: HTMLElement): boolean {
-  const rect = el.getBoundingClientRect();
-  const vh = typeof window !== "undefined" ? window.innerHeight : 0;
-  if (vh <= 0) {
-    return false;
-  }
-  return rect.top < vh && rect.bottom > 0;
-}
-
 type SectionGridImagesProps = {
   images: string[];
   /**
@@ -43,6 +34,8 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
   const switchRef = useRef<HTMLDivElement | null>(null);
   const switchTransitionRect = useRef<DOMRect | null>(null);
   const pinnedRef = useRef(false);
+  /** After section change, parent scrolls to top — ignore stale scrollY for pin until then. */
+  const suppressPinRef = useRef(false);
   const pendingFlipState = useRef<Flip.FlipState | null>(null);
   const [columns, setColumns] = useState<GridColumnCount>(3);
   const [isMobile, setIsMobile] = useState(false);
@@ -83,6 +76,10 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
     }
 
     const syncPinnedState = () => {
+      if (suppressPinRef.current) {
+        return;
+      }
+
       const nextPinned = window.scrollY > 16;
       if (nextPinned === pinnedRef.current) {
         return;
@@ -108,6 +105,38 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
     };
   }, [isMobile]);
 
+  /** Section change: unpin until scroll-to-top finishes (parent `activeMode` effect). */
+  useLayoutEffect(() => {
+    suppressPinRef.current = true;
+    pinnedRef.current = false;
+    setIsPinned(false);
+    setPinnedSlotSize(null);
+  }, [imageListKey]);
+
+  useEffect(() => {
+    if (isMobile) {
+      return;
+    }
+
+    const releasePin = () => {
+      suppressPinRef.current = false;
+      const nextPinned = window.scrollY > 16;
+      pinnedRef.current = nextPinned;
+      setIsPinned(nextPinned);
+
+      const switchEl = switchRef.current;
+      if (nextPinned && switchEl) {
+        const { width, height } = switchEl.getBoundingClientRect();
+        setPinnedSlotSize({ width, height });
+      } else {
+        setPinnedSlotSize(null);
+      }
+    };
+
+    const timeoutId = window.setTimeout(releasePin, 900);
+    return () => window.clearTimeout(timeoutId);
+  }, [imageListKey, isMobile]);
+
   useLayoutEffect(() => {
     const switchEl = switchRef.current;
     const previousRect = switchTransitionRect.current;
@@ -125,7 +154,7 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
     }
 
     const ctx = gsap.context(() => {
-      gsap.killTweensOf(switchEl);
+      gsap.killTweensOf(switchEl, "x,y,scale");
       gsap.fromTo(
         switchEl,
         {
@@ -176,7 +205,6 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
 
   useLayoutEffect(() => {
     const root = gridRef.current;
-    const switchEl = switchRef.current;
     if (!root || images.length === 0) {
       return;
     }
@@ -196,12 +224,6 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
           opacity: 1,
           clearProps: "transform,filter",
         });
-        if (switchEl) {
-          gsap.set(switchEl, {
-            opacity: 1,
-            clearProps: "transform,filter",
-          });
-        }
         return;
       }
 
@@ -215,17 +237,6 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
         force3D: true,
       });
 
-      if (switchEl) {
-        gsap.set(switchEl, {
-          opacity: GRID_IMAGE_INITIAL_OPACITY,
-          yPercent: 5,
-          scale: 0.98,
-          transformOrigin: "50% 50%",
-          filter: `blur(${Math.max(4, GRID_IMAGE_INITIAL_BLUR_PX - 2)}px)`,
-          force3D: true,
-        });
-      }
-
       let played = false;
       const play = () => {
         if (played) {
@@ -233,6 +244,7 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
         }
         played = true;
         const delay = revealAfterLines(firstLineIndex);
+        gsap.killTweensOf(imgs);
         gsap.to(imgs, {
           opacity: 1,
           yPercent: 0,
@@ -243,51 +255,61 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
           ease: EASE_TRANSFORM,
           force3D: true,
         });
-        if (switchEl) {
-          gsap.to(switchEl, {
-            opacity: 1,
-            yPercent: 0,
-            scale: 1,
-            filter: "blur(0px)",
-            duration: DURATION_TRANSFORM_S,
-            delay,
-            ease: EASE_TRANSFORM,
-            force3D: true,
-          });
-        }
-      };
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          const entry = entries[0];
-          if (entry?.isIntersecting) {
-            play();
-            observer.disconnect();
-          }
-        },
-        {
-          root: null,
-          rootMargin: "0px",
-          threshold: 0,
-        },
-      );
-
-      observer.observe(root);
-
-      const tryPlayIfAlreadyVisible = () => {
-        if (isElementInViewport(root)) {
-          play();
-          observer.disconnect();
-        }
       };
 
       requestAnimationFrame(() => {
-        requestAnimationFrame(tryPlayIfAlreadyVisible);
+        requestAnimationFrame(() => play());
       });
     }, root);
 
     return () => {
       ctx.revert();
+    };
+  }, [imageListKey, images.length, firstLineIndex]);
+
+  /* Switch reveal is separate — pin transition used to killTweensOf(all) and zero opacity. */
+  useLayoutEffect(() => {
+    const switchEl = switchRef.current;
+    if (!switchEl || images.length === 0) {
+      return;
+    }
+
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduceMotion) {
+      gsap.set(switchEl, {
+        opacity: 1,
+        clearProps: "transform,filter",
+      });
+      return;
+    }
+
+    gsap.killTweensOf(switchEl, "opacity,filter,yPercent,scale");
+    gsap.set(switchEl, {
+      opacity: GRID_IMAGE_INITIAL_OPACITY,
+      yPercent: 5,
+      scale: 0.98,
+      transformOrigin: "50% 50%",
+      filter: `blur(${Math.max(4, GRID_IMAGE_INITIAL_BLUR_PX - 2)}px)`,
+      force3D: true,
+    });
+
+    const delay = revealAfterLines(firstLineIndex);
+    const tween = gsap.to(switchEl, {
+      opacity: 1,
+      yPercent: 0,
+      scale: 1,
+      filter: "blur(0px)",
+      duration: DURATION_TRANSFORM_S,
+      delay,
+      ease: EASE_TRANSFORM,
+      force3D: true,
+    });
+
+    return () => {
+      tween.kill();
     };
   }, [imageListKey, images.length, firstLineIndex]);
 
