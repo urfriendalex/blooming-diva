@@ -117,10 +117,38 @@ function waitForWindowLoad(): Promise<void> {
 /** Match header bleed geometry so intro doesn’t re-center text (avoids a left jump on Flip). */
 function getBleedFrame(bleed: HTMLElement) {
   const rect = bleed.getBoundingClientRect();
+  const layoutWidth =
+    typeof document !== "undefined"
+      ? document.documentElement.clientWidth
+      : rect.width;
+  const viewportWidth =
+    typeof window !== "undefined"
+      ? (window.visualViewport?.width ?? layoutWidth)
+      : rect.width;
+
   return {
-    left: rect.left,
-    width: rect.width,
+    left: Math.max(0, rect.left),
+    width: Math.min(rect.width, layoutWidth, viewportWidth),
   };
+}
+
+function getTitleFitWidth(bleed: HTMLElement, paddingX: number): number {
+  const rect = bleed.getBoundingClientRect();
+  const layoutWidth =
+    typeof document !== "undefined"
+      ? document.documentElement.clientWidth
+      : rect.width;
+  const viewportWidth =
+    typeof window !== "undefined"
+      ? (window.visualViewport?.width ?? layoutWidth)
+      : rect.width;
+  const effectiveWidth = Math.min(
+    bleed.clientWidth,
+    rect.width,
+    layoutWidth,
+    viewportWidth,
+  );
+  return Math.max(32, (effectiveWidth - paddingX) * 0.998);
 }
 
 function ExperienceTitleComponent({
@@ -155,7 +183,7 @@ function ExperienceTitleComponent({
     const paddingX =
       Number.parseFloat(styles.paddingLeft) +
       Number.parseFloat(styles.paddingRight);
-    const target = (bleed.clientWidth - paddingX) * 0.985;
+    const target = getTitleFitWidth(bleed, paddingX);
     if (target < 32) {
       return;
     }
@@ -195,9 +223,11 @@ function ExperienceTitleComponent({
     });
     ro.observe(bleed);
     window.addEventListener("orientationchange", applyFit);
+    window.visualViewport?.addEventListener("resize", applyFit);
     return () => {
       ro.disconnect();
       window.removeEventListener("orientationchange", applyFit);
+      window.visualViewport?.removeEventListener("resize", applyFit);
     };
   }, [applyFit]);
 
@@ -351,7 +381,10 @@ function ExperienceTitleComponent({
           simple: true,
           onComplete: () => {
             introFinishedRef.current = true;
-            gsap.set(titleRoot, { clearProps: "transform" });
+            gsap.set(titleRoot, {
+              clearProps:
+                "transform,x,y,xPercent,yPercent,left,top,width,textAlign",
+            });
             gsap.set(titleRoot, { opacity: 1 });
             gsap.set(track, { clearProps: "opacity,transform,filter" });
             gsap.set(overline, { clearProps: "opacity,filter" });

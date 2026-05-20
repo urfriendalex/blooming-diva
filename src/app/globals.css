@@ -276,9 +276,9 @@ input {
 
 /* Full-viewport strip: breaks out of .experience horizontal padding */
 .experience__title-bleed {
-  width: 100vw;
-  max-width: 100vw;
-  margin-inline: calc(50% - 50vw);
+  width: calc(100% + (2 * var(--page-pad-x)));
+  max-width: 100%;
+  margin-inline: calc(-1 * var(--page-pad-x));
   box-sizing: border-box;
   overflow: visible;
   z-index: 31;
@@ -291,7 +291,8 @@ input {
   width: 100%;
   max-width: 100%;
   overflow: visible;
-  padding-inline: clamp(6px, 0.9vw, 12px);
+  padding-left: clamp(6px, 0.9vw, 12px);
+  padding-right: clamp(2px, 0.25vw, 4px);
   border: 0;
   margin: 0;
   background: transparent;
@@ -1680,6 +1681,15 @@ button.experience__meta--cta:focus-visible {
 
   .experience__register-cta-button-wrap .sticky-register__button {
     font-size: var(--landing-mobile-cta-font-size);
+    justify-content: center;
+    width: 100%;
+  }
+
+  .experience__register-cta-button-wrap .text-reveal,
+  .experience__register-cta-button-wrap .text-reveal__line,
+  .experience__register-cta-button-wrap .text-reveal__inner {
+    width: 100%;
+    text-align: center;
   }
 
   /* Hide fixed frost UI until title snap (same window as nav/main reveal); avoids floating over the shell early. */
