@@ -29,15 +29,6 @@ export type TextRevealProps = {
   playOnce?: boolean;
 };
 
-function isElementInViewport(el: HTMLElement): boolean {
-  const rect = el.getBoundingClientRect();
-  const vh = typeof window !== "undefined" ? window.innerHeight : 0;
-  if (vh <= 0) {
-    return false;
-  }
-  return rect.top < vh && rect.bottom > 0;
-}
-
 /** `a.text-link--drawn`, or submit button ink `::before` + TextReveal (sticky CTAs have no drawn line). */
 function getUnderlineHosts(root: HTMLElement): HTMLElement[] {
   const anchors = [...root.querySelectorAll<HTMLElement>("a.text-link--drawn")];
@@ -79,13 +70,15 @@ export function TextReveal({
   playOnce = false,
 }: TextRevealProps) {
   const ref = useRef<HTMLElement | null>(null);
-  const measureRef = useRef<HTMLSpanElement | null>(null);
   const hasAnimatedRef = useRef(false);
+  const completedLinesKeyRef = useRef<string | null>(null);
   const tweenRef = useRef<gsap.core.Tween | null>(null);
-  const lines = useVisualLines(text, measureRef);
+  const lines = useVisualLines(text, ref as RefObject<HTMLElement | null>);
+  const linesKey = lines.join("\n");
 
   useEffect(() => {
     hasAnimatedRef.current = false;
+    completedLinesKeyRef.current = null;
     tweenRef.current?.kill();
     tweenRef.current = null;
   }, [text]);
@@ -113,9 +106,16 @@ export function TextReveal({
       return;
     }
 
+    if (completedLinesKeyRef.current === linesKey) {
+      showRevealed(inners);
+      markUnderlineRevealed(underlineHosts);
+      return;
+    }
+
     if (reduceMotion) {
       showRevealed(inners);
       markUnderlineRevealed(underlineHosts);
+      completedLinesKeyRef.current = linesKey;
       if (playOnce) {
         hasAnimatedRef.current = true;
       }
@@ -147,6 +147,7 @@ export function TextReveal({
         force3D: false,
         onComplete: () => {
           showRevealed(inners);
+          completedLinesKeyRef.current = linesKey;
           if (playOnce) {
             hasAnimatedRef.current = true;
           }
@@ -155,27 +156,7 @@ export function TextReveal({
       });
     };
 
-    const tryPlay = () => {
-      if (isElementInViewport(root)) {
-        play();
-      }
-    };
-
-    tryPlay();
-
-    let observer: IntersectionObserver | null = null;
-    if (!played) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0]?.isIntersecting) {
-            play();
-            observer?.disconnect();
-          }
-        },
-        { root: null, rootMargin: "0px 0px 20% 0px", threshold: 0 },
-      );
-      observer.observe(root);
-    }
+    play();
 
     const failsafeMs =
       (blockDelay +
@@ -188,27 +169,25 @@ export function TextReveal({
         play();
       }
       showRevealed(inners);
+      completedLinesKeyRef.current = linesKey;
       markUnderlineRevealed(underlineHosts);
       if (playOnce) {
         hasAnimatedRef.current = true;
       }
     }, failsafeMs);
 
-    const rafId = requestAnimationFrame(() => {
-      requestAnimationFrame(tryPlay);
-    });
-
     return () => {
       window.clearTimeout(failsafeId);
-      cancelAnimationFrame(rafId);
-      observer?.disconnect();
+      if (completedLinesKeyRef.current === linesKey) {
+        return;
+      }
       tweenRef.current?.kill();
       tweenRef.current = null;
       if (!(playOnce && hasAnimatedRef.current)) {
         clearUnderlineState(underlineHosts);
       }
     };
-  }, [lines, text, blockDelay, playOnce]);
+  }, [linesKey, text, blockDelay, playOnce]);
 
   useEffect(() => {
     return () => {
@@ -238,45 +217,34 @@ export function TextReveal({
       ))
     );
 
-  const measureProbe = (
-    <span ref={measureRef} className="text-reveal__measure" aria-hidden="true">
-      {text}
-    </span>
-  );
-
   switch (tag) {
     case "h2":
       return (
         <h2 ref={ref as RefObject<HTMLHeadingElement | null>} className={mergedClass}>
-          {measureProbe}
           {children}
         </h2>
       );
     case "h3":
       return (
         <h3 ref={ref as RefObject<HTMLHeadingElement | null>} className={mergedClass}>
-          {measureProbe}
           {children}
         </h3>
       );
     case "span":
       return (
         <span ref={ref as RefObject<HTMLSpanElement | null>} className={mergedClass}>
-          {measureProbe}
           {children}
         </span>
       );
     case "div":
       return (
         <div ref={ref as RefObject<HTMLDivElement | null>} className={mergedClass}>
-          {measureProbe}
           {children}
         </div>
       );
     default:
       return (
         <p ref={ref as RefObject<HTMLParagraphElement | null>} className={mergedClass}>
-          {measureProbe}
           {children}
         </p>
       );

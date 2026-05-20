@@ -1101,8 +1101,8 @@ export function BloomingDivaExperience({
               </article>
             ) : activeContent && topicReveal ? (
               <article className="topic-detail">
-                <div className="topic-detail__intro">
-                  <div className="topic-detail__heading">
+                <div className="topic-detail__intro apply-view__intro">
+                  <div className="apply-view__title-block topic-detail__heading">
                     <TextReveal
                       as="h2"
                       text={activeContent.person}
@@ -1120,7 +1120,7 @@ export function BloomingDivaExperience({
                     />
                   </div>
 
-                  <div className="topic-detail__copy">
+                  <div className="apply-view__copy topic-detail__copy">
                     {topicReveal.descriptions.map(
                       ({ paragraph, blockDelay }) => (
                         <TextReveal

@@ -70,12 +70,12 @@ export function useVisualLines<T extends HTMLElement>(
     tick();
   }, [relayout]);
 
-  useLayoutEffect(() => {
-    setLines((prev) => {
-      const fallback = fallbackLines(text);
-      return linesEqual(prev, fallback) ? prev : fallback;
-    });
+  useEffect(() => {
+    setLines(fallbackLines(text));
     measuredWidthRef.current = 0;
+  }, [text]);
+
+  useLayoutEffect(() => {
     if (!relayout()) {
       scheduleLayout();
     }
