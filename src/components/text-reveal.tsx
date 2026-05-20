@@ -180,15 +180,19 @@ export function TextReveal({
   const mergedClass = [
     "text-reveal",
     tag === "span" ? "text-reveal--as-span" : "",
+    lines !== null ? "text-reveal--laid-out" : "",
     className,
   ]
     .filter(Boolean)
     .join(" ");
 
+  /*
+   * Don't paint raw paragraph text while lines are measured — iOS Safari can auto-inflate
+   * long unwrapped blocks (text-size-adjust) and keep that size after line split until remount.
+   * `measureVisualLines` uses the `text` prop + element width/typography, not DOM text nodes.
+   */
   const children: ReactNode =
-    lines === null ? (
-      text
-    ) : lines.length === 0 ? null : (
+    lines === null ? null : lines.length === 0 ? null : (
       lines.map((line, index) => (
         <span
           key={`${index}-${line.slice(0, 24)}`}
