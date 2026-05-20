@@ -14,13 +14,11 @@ export function PretextParagraph({ text }: PretextParagraphProps) {
 
   return (
     <p ref={ref}>
-      {lines === null
-        ? text
-        : lines.map((line, index) => (
-            <span className="pretext-flow__line" key={index}>
-              {line}
-            </span>
-          ))}
+      {lines.map((line, index) => (
+        <span className="pretext-flow__line" key={index}>
+          {line}
+        </span>
+      ))}
     </p>
   );
 }
