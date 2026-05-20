@@ -4,6 +4,8 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -291,6 +293,7 @@ input {
   width: 100%;
   max-width: 100%;
   overflow: visible;
+  padding-block: 0;
   padding-left: clamp(6px, 0.9vw, 12px);
   padding-right: clamp(2px, 0.25vw, 4px);
   border: 0;
@@ -739,6 +742,20 @@ button.experience__meta--cta:focus-visible {
   font-size: clamp(0.75rem, 1.1vw, 1.02rem);
   font-weight: 700;
   line-height: 1.28;
+}
+
+.topic-detail__copy > .text-reveal {
+  font-size: clamp(0.75rem, 1.1vw, 1.02rem);
+  font-weight: 700;
+  line-height: 1.28;
+  color: var(--color-ink-soft);
+}
+
+.topic-detail__heading > .text-reveal {
+  font-size: var(--topic-detail-title-size);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
 }
 
 .topic-detail__copy p {
@@ -1623,7 +1640,6 @@ button.experience__meta--cta:focus-visible {
 
   .experience__title {
     line-height: 1.12;
-    padding-block: 0.24em 0.06em;
   }
 
   .experience__nav-row {
