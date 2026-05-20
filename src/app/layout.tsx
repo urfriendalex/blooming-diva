@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Inter, Pinyon_Script } from "next/font/google";
 
@@ -61,6 +61,11 @@ export const metadata: Metadata = {
     description: siteContent.seo.description,
   },
   category: "photography",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

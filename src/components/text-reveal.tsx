@@ -187,15 +187,7 @@ export function TextReveal({
 
   const children: ReactNode =
     lines === null ? (
-      <span
-        className={["text-reveal__line", "pretext-flow__line", lineClassName]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        <span className="text-reveal__inner">
-          {renderLine ? renderLine(text, 0) : text}
-        </span>
-      </span>
+      text
     ) : lines.length === 0 ? null : (
       lines.map((line, index) => (
         <span

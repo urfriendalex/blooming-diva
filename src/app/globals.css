@@ -4,8 +4,8 @@
 
 html {
   scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
 }
 
 body {
@@ -26,8 +26,6 @@ body {
     "cv11" 1;
   letter-spacing: -0.014em;
   text-rendering: optimizeLegibility;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -273,6 +271,7 @@ input {
   align-items: stretch;
   gap: 0.85rem;
   width: 100%;
+  min-width: 0;
   position: relative;
   z-index: 2;
   overflow: visible;
@@ -441,8 +440,8 @@ input {
   width: 100%;
   min-width: 0;
   position: relative;
-  z-index: 60;
-  background: transparent;
+  z-index: 30;
+  background: var(--color-bg);
   padding-block: 0.35rem;
 }
 
@@ -451,24 +450,25 @@ input {
   left: 0;
   right: 0;
   top: 0;
-  z-index: 60;
+  z-index: 50;
   box-sizing: border-box;
   padding-inline: var(--page-pad-x);
   padding-top: calc(env(safe-area-inset-top, 0px) + 0.35rem);
   padding-bottom: 0.35rem;
-  border-bottom: var(--landing-frost-chip-border);
-  background: var(--landing-info-frost-bg);
-  -webkit-backdrop-filter: blur(var(--landing-info-frost-blur)) saturate(1.08);
-  backdrop-filter: blur(var(--landing-info-frost-blur)) saturate(1.08);
-  transform: translateZ(0);
+  background: var(--color-bg);
 }
 
 .experience__nav {
   display: flex;
   flex-wrap: nowrap;
-  align-items: center;
   gap: clamp(0.7rem, 1.8vw, 1.75rem);
   min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.experience__nav::-webkit-scrollbar {
+  display: none;
 }
 
 .experience__nav-item {
@@ -653,8 +653,6 @@ button.experience__meta--cta:focus-visible {
   margin: 0;
   min-width: 0;
   white-space: pre-line;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 .text-reveal__line {
@@ -726,8 +724,6 @@ button.experience__meta--cta:focus-visible {
 .topic-detail {
   display: grid;
   gap: clamp(2rem, 3vw, 3rem);
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 .topic-detail__intro {
@@ -756,21 +752,6 @@ button.experience__meta--cta:focus-visible {
   font-size: clamp(0.75rem, 1.1vw, 1.02rem);
   font-weight: 700;
   line-height: 1.28;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-.topic-detail__copy > .text-reveal,
-.topic-detail__copy > .text-reveal .text-reveal__line,
-.topic-detail__copy > .text-reveal .text-reveal__inner {
-  color: inherit;
-  font: inherit;
-  font-size: clamp(0.75rem, 1.1vw, 1.02rem);
-  font-weight: inherit;
-  letter-spacing: inherit;
-  line-height: inherit;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 .topic-detail__copy p {
