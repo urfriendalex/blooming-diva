@@ -76,12 +76,11 @@ type ExperienceTitleProps = {
 
 /**
  * Binary-search font size so the nowrap track fits the bleed.
- * Important: do not use `button.scrollWidth` — native `<button>` layout often reports
- * scrollWidth no wider than the box even when inline content overflows, so the fit
- * would be wrong. Measure the inner `.experience__title-reveal-track` instead.
+ * Measure the inner `.experience__title-reveal-track`, not the outer control — width
+ * reporting on replaced/form controls is unreliable across browsers.
  */
 function fitTitleFontSize(
-  button: HTMLButtonElement,
+  titleRoot: HTMLElement,
   track: HTMLElement,
   targetWidthPx: number,
 ): number {
@@ -89,7 +88,7 @@ function fitTitleFontSize(
   let hi = 720;
   for (let i = 0; i < 40; i++) {
     const mid = (lo + hi) / 2;
-    button.style.fontSize = `${mid}px`;
+    titleRoot.style.fontSize = `${mid}px`;
     const w = track.scrollWidth;
     if (w <= targetWidthPx) {
       lo = mid;
@@ -98,10 +97,10 @@ function fitTitleFontSize(
     }
   }
   let px = Math.floor(lo * 1000) / 1000;
-  button.style.fontSize = `${px}px`;
+  titleRoot.style.fontSize = `${px}px`;
   while (px > 6 && track.scrollWidth > targetWidthPx) {
     px = Math.floor((px - 0.25) * 1000) / 1000;
-    button.style.fontSize = `${px}px`;
+    titleRoot.style.fontSize = `${px}px`;
   }
   return px;
 }
@@ -132,7 +131,7 @@ function ExperienceTitleComponent({
   onPreloaderComplete,
 }: ExperienceTitleProps) {
   const bleedRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
   const introStartedRef = useRef(false);
   const introFinishedRef = useRef(false);
   /** Declarative “surface visible” so CSS opacity survives parent re-renders during the intro. */
@@ -145,14 +144,14 @@ function ExperienceTitleComponent({
 
   const applyFit = useCallback(() => {
     const bleed = bleedRef.current;
-    const button = buttonRef.current;
-    const track = button?.querySelector<HTMLElement>(
+    const titleRoot = titleRef.current;
+    const track = titleRoot?.querySelector<HTMLElement>(
       ".experience__title-reveal-track",
     );
-    if (!bleed || !button || !track) {
+    if (!bleed || !titleRoot || !track) {
       return;
     }
-    const styles = window.getComputedStyle(button);
+    const styles = window.getComputedStyle(titleRoot);
     const paddingX =
       Number.parseFloat(styles.paddingLeft) +
       Number.parseFloat(styles.paddingRight);
@@ -160,8 +159,18 @@ function ExperienceTitleComponent({
     if (target < 32) {
       return;
     }
-    fitTitleFontSize(button, track, target);
+    fitTitleFontSize(titleRoot, track, target);
   }, []);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onClick();
+      }
+    },
+    [onClick],
+  );
 
   useLayoutEffect(() => {
     const run = () => {
@@ -195,19 +204,19 @@ function ExperienceTitleComponent({
   useLayoutEffect(() => {
     if (!preloader) {
       scheduleIntroSurface(false);
-      const button = buttonRef.current;
-      const track = button?.querySelector<HTMLElement>(
+      const titleRoot = titleRef.current;
+      const track = titleRoot?.querySelector<HTMLElement>(
         ".experience__title-reveal-track",
       );
-      const overline = button?.querySelector<HTMLElement>(
+      const overline = titleRoot?.querySelector<HTMLElement>(
         ".experience__title-overline",
       );
-      const clip = button?.querySelector<HTMLElement>(
+      const clip = titleRoot?.querySelector<HTMLElement>(
         ".experience__title-reveal-clip",
       );
-      if (button) {
-        gsap.killTweensOf(button);
-        gsap.set(button, { clearProps: "opacity,visibility" });
+      if (titleRoot) {
+        gsap.killTweensOf(titleRoot);
+        gsap.set(titleRoot, { clearProps: "opacity,visibility" });
       }
       if (clip) {
         gsap.set(clip, { clearProps: "perspective" });
@@ -231,24 +240,24 @@ function ExperienceTitleComponent({
     }
 
     const bleed = bleedRef.current;
-    const button = buttonRef.current;
-    const track = button?.querySelector<HTMLElement>(
+    const titleRoot = titleRef.current;
+    const track = titleRoot?.querySelector<HTMLElement>(
       ".experience__title-reveal-track",
     );
-    const overline = button?.querySelector<HTMLElement>(
+    const overline = titleRoot?.querySelector<HTMLElement>(
       ".experience__title-overline",
     );
-    const clip = button?.querySelector<HTMLElement>(
+    const clip = titleRoot?.querySelector<HTMLElement>(
       ".experience__title-reveal-clip",
     );
-    if (!bleed || !button || !track || !overline || !clip) {
+    if (!bleed || !titleRoot || !track || !overline || !clip) {
       return;
     }
 
     scheduleIntroSurface(false);
 
     /* Before any await (fonts.load etc.): hide title so first paint cannot show header slot. */
-    gsap.set(button, { opacity: 0 });
+    gsap.set(titleRoot, { opacity: 0 });
 
     introStartedRef.current = true;
     let cancelled = false;
@@ -288,7 +297,7 @@ function ExperienceTitleComponent({
         });
 
         const bleedFrame = getBleedFrame(bleed);
-        gsap.set(button, {
+        gsap.set(titleRoot, {
           position: "fixed",
           left: bleedFrame.left,
           top: "50%",
@@ -320,20 +329,20 @@ function ExperienceTitleComponent({
         }
 
         const bleedFrameBeforeFlip = getBleedFrame(bleed);
-        gsap.set(button, {
+        gsap.set(titleRoot, {
           left: bleedFrameBeforeFlip.left,
           width: bleedFrameBeforeFlip.width,
         });
 
         /** Record fixed intro layout, then snap to natural header in the DOM; Flip animates into place. */
-        const state = Flip.getState(button);
+        const state = Flip.getState(titleRoot);
 
         bleed.classList.remove("experience__title-bleed--preloader-slot");
-        gsap.set(button, {
+        gsap.set(titleRoot, {
           clearProps:
             "position,left,top,width,textAlign,boxSizing,zIndex,xPercent,yPercent,transform",
         });
-        gsap.set(button, { opacity: 1 });
+        gsap.set(titleRoot, { opacity: 1 });
 
         Flip.from(state, {
           duration: reduceMotion ? 0.05 : 0.75,
@@ -342,8 +351,8 @@ function ExperienceTitleComponent({
           simple: true,
           onComplete: () => {
             introFinishedRef.current = true;
-            gsap.set(button, { clearProps: "transform" });
-            gsap.set(button, { opacity: 1 });
+            gsap.set(titleRoot, { clearProps: "transform" });
+            gsap.set(titleRoot, { opacity: 1 });
             gsap.set(track, { clearProps: "opacity,transform,filter" });
             gsap.set(overline, { clearProps: "opacity,filter" });
             onPreloaderComplete?.();
@@ -352,7 +361,7 @@ function ExperienceTitleComponent({
       };
 
       void runIntro();
-    }, button);
+    }, titleRoot);
 
     return () => {
       cancelled = true;
@@ -365,13 +374,15 @@ function ExperienceTitleComponent({
 
   return (
     <div className="experience__title-bleed" ref={bleedRef}>
-      <button
-        ref={buttonRef}
+      <div
+        ref={titleRef}
+        role="button"
+        tabIndex={0}
         className={`experience__title${
           introSurface ? " experience__title--intro-surface" : ""
         }`}
-        type="button"
         onClick={onClick}
+        onKeyDown={handleKeyDown}
         aria-label={label}
       >
         <span className="experience__title-reveal-clip">
@@ -380,7 +391,7 @@ function ExperienceTitleComponent({
         <span className="experience__title-overline" aria-hidden="true">
           {overlineLabel}
         </span>
-      </button>
+      </div>
     </div>
   );
 }

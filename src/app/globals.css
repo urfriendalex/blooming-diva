@@ -269,9 +269,9 @@ input {
   align-items: stretch;
   gap: 0.85rem;
   width: 100%;
-  min-width: 0;
   position: relative;
   z-index: 2;
+  overflow: visible;
 }
 
 /* Full-viewport strip: breaks out of .experience horizontal padding */
@@ -290,10 +290,7 @@ input {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  min-width: 0;
   overflow: visible;
-  /* em padding scales with JS-measured title size — room for script ascenders/descenders in Safari. */
-  padding-block: 0.22em 0.06em;
   padding-inline: clamp(6px, 0.9vw, 12px);
   border: 0;
   margin: 0;
@@ -375,32 +372,33 @@ input {
 .experience__title-overline {
   position: absolute;
   top: 88%;
-  right: 4%;
+  right: 8%;
   z-index: 0;
-  transform: translate(-50%, -50%);
+  display: inline-block;
+  transform: translateY(-50%);
   overflow: visible;
   font-family: var(--font-title), var(--font-title-fallback);
   font-size: clamp(0.9375rem, 5.8vw, 3.75rem);
-  font-weight: 800;
-  line-height: 1;
+  font-weight: 400;
+  line-height: 1.35;
   letter-spacing: 0.02em;
+  /* Script italic swashes extend past the layout box — pad so Safari doesn't slice glyphs. */
+  padding-block: 0.14em;
+  padding-inline: 0.5em 0.12em;
   color: var(--color-ink);
   pointer-events: none;
   white-space: nowrap;
 }
 
 .experience__title-reveal-clip {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 100%;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
   line-height: inherit;
   overflow: visible;
 }
 
 .experience__title-reveal-track {
-  position: relative;
-  z-index: 1;
   display: inline-block;
   white-space: nowrap;
   text-align: inherit;
