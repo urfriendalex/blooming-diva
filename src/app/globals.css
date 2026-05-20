@@ -284,7 +284,9 @@ input {
   max-width: 100%;
   margin-inline: calc(-1 * var(--page-pad-x));
   box-sizing: border-box;
-  overflow: visible;
+  overflow-x: clip;
+  /* `overflow-x: clip` forces the block axis to clip in WebKit — pad generously so script ascenders fit. */
+  padding-block: clamp(10px, 2.4vw, 18px);
   z-index: 31;
 }
 
@@ -382,7 +384,6 @@ input {
   z-index: 0;
   display: inline-block;
   transform: translateY(-50%);
-  overflow: visible;
   font-family: var(--font-title), var(--font-title-fallback);
   font-size: clamp(0.9375rem, 5.8vw, 3.75rem);
   font-weight: 400;
