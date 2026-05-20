@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 import { Inter, Pinyon_Script } from "next/font/google";
 
 import { siteContent } from "@/lib/site-content";
