@@ -57,23 +57,6 @@ export function useVisualLines<T extends HTMLElement>(
   }, [scheduleLayout]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const onLoad = () => {
-      scheduleLayout();
-    };
-    if (document.readyState === "complete") {
-      scheduleLayout();
-    } else {
-      window.addEventListener("load", onLoad, { once: true });
-    }
-    return () => {
-      window.removeEventListener("load", onLoad);
-    };
-  }, [scheduleLayout]);
-
-  useEffect(() => {
     const el = ref.current;
     if (!el) {
       return;

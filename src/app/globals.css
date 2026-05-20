@@ -13,8 +13,6 @@ body {
   min-width: 320px;
   /* Horizontal clip on body avoids overflow-x on html pairing with overflow-y in a way that breaks `position: sticky` against the viewport in some engines. */
   overflow-x: clip;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
@@ -646,8 +644,6 @@ button.experience__meta--cta:focus-visible {
   margin: 0;
   min-width: 0;
   white-space: pre-line;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 .text-reveal__line {
@@ -754,14 +750,6 @@ button.experience__meta--cta:focus-visible {
   font-weight: 700;
   line-height: 1.28;
   color: var(--color-ink-soft);
-}
-
-.topic-detail__copy > .text-reveal .text-reveal__line,
-.topic-detail__copy > .text-reveal .text-reveal__inner {
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-  color: inherit;
 }
 
 .topic-detail__heading > .text-reveal {
@@ -1785,12 +1773,5 @@ button.experience__meta--cta:focus-visible {
   .booking-success h3,
   .booking-success p {
     font-size: 0.75rem;
-  }
-
-  .topic-detail__copy,
-  .topic-detail__copy > .text-reveal,
-  .topic-detail__copy > .text-reveal .text-reveal__line,
-  .topic-detail__copy > .text-reveal .text-reveal__inner {
-    font-size: 12px;
   }
 }
