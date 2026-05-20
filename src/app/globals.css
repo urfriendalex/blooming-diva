@@ -281,8 +281,8 @@ input {
   margin-inline: calc(50% - 50vw);
   box-sizing: border-box;
   overflow-x: clip;
-  /* Room for script ascenders/descenders inside the horizontal clip strip */
-  padding-block: 0.12em;
+  /* `overflow-x: clip` forces the block axis to clip in WebKit — pad generously so script ascenders fit. */
+  padding-block: clamp(10px, 2.4vw, 18px);
   z-index: 31;
 }
 
@@ -294,7 +294,8 @@ input {
   max-width: 100%;
   min-width: 0;
   overflow: visible;
-  padding-block: 0;
+  /* em padding scales with JS-measured title size — room for script ascenders/descenders in Safari. */
+  padding-block: 0.22em 0.06em;
   padding-inline: clamp(6px, 0.9vw, 12px);
   border: 0;
   margin: 0;
@@ -304,7 +305,7 @@ input {
   font-family: var(--font-title), var(--font-title-fallback);
   font-size: clamp(2.8rem, 14vw, 9.5rem);
   font-weight: 400;
-  line-height: 1.1;
+  line-height: 1.15;
   letter-spacing: 0em;
   text-transform: none;
   text-align: left;
@@ -1623,7 +1624,8 @@ button.experience__meta--cta:focus-visible {
   }
 
   .experience__title {
-    line-height: 1.08;
+    line-height: 1.12;
+    padding-block: 0.24em 0.06em;
   }
 
   .experience__nav-row {
