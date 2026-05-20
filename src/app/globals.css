@@ -410,6 +410,14 @@ input {
   text-align: inherit;
 }
 
+/* Preloader intro only — blur/scale must not be clipped by bleed overflow-x: clip (Safari). */
+.experience--preloader-intro .experience__header,
+.experience--preloader-intro .experience__title-bleed,
+.experience--preloader-intro .experience__title,
+.experience--preloader-intro .experience__title-reveal-clip {
+  overflow: visible;
+}
+
 .experience__title--intro-surface .experience__title-reveal-track,
 .experience__title--intro-surface .experience__title-overline {
   will-change: transform, opacity, filter;
