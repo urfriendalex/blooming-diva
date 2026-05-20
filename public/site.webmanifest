@@ -2,8 +2,17 @@
   "name": "Blooming Diva",
   "short_name": "Blooming Diva",
   "icons": [
-    { "src": "/apple-icon", "sizes": "180x180", "type": "image/png" },
-    { "src": "/icon.svg", "sizes": "32x32", "type": "image/svg+xml" }
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
   ],
   "theme_color": "#ede8dc",
   "background_color": "#ede8dc",

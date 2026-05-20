@@ -2,7 +2,14 @@
 
 /* eslint-disable @next/next/no-img-element, react-hooks/set-state-in-effect */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { gsap } from "gsap";
 
@@ -86,7 +93,9 @@ export function BloomingDivaExperience({
   const isMarqueePausedRef = useRef(false);
   const prefersReducedMotionRef = useRef(false);
   const frameRef = useRef<number | null>(null);
-  const [introState, setIntroState] = useState<"intro" | "reveal" | "idle">("intro");
+  const [introState, setIntroState] = useState<"intro" | "reveal" | "idle">(
+    "intro",
+  );
   /** Bumps when returning to landing from a topic or signup so the marquee can re-enter in sync with line reveals. */
   const [marqueeLandingEnterSeq, setMarqueeLandingEnterSeq] = useState(0);
   const prevModeForMarqueeRef = useRef<ExperienceMode | null>(null);
@@ -95,7 +104,10 @@ export function BloomingDivaExperience({
     () => content.topics.find((topic) => topic.key === activeTopic) ?? null,
     [activeTopic, content.topics],
   );
-  const topicKeys = useMemo(() => new Set(content.topics.map((topic) => topic.key)), [content.topics]);
+  const topicKeys = useMemo(
+    () => new Set(content.topics.map((topic) => topic.key)),
+    [content.topics],
+  );
 
   const headerMetaReveal = useMemo(() => {
     let c = 0;
@@ -199,7 +211,9 @@ export function BloomingDivaExperience({
   /** One register CTA for the whole experience — delay is fixed at first paint (landing vs topic hash). */
   const [registerCtaRevealDelay] = useState(() => {
     const initialMode =
-      typeof window === "undefined" ? "landing" : parseHashMode(window.location.hash);
+      typeof window === "undefined"
+        ? "landing"
+        : parseHashMode(window.location.hash);
 
     return initialMode !== "landing" && initialMode !== "signup" && topicReveal
       ? revealAfterLines(topicReveal.stickyLineIndex)
@@ -254,9 +268,10 @@ export function BloomingDivaExperience({
   }, [activeMode, toggleRegisterMode]);
 
   const [headerMetaCursorFine, setHeaderMetaCursorFine] = useState(false);
-  const [headerMetaCursorPos, setHeaderMetaCursorPos] = useState<{ x: number; y: number } | null>(
-    null,
-  );
+  const [headerMetaCursorPos, setHeaderMetaCursorPos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -276,17 +291,20 @@ export function BloomingDivaExperience({
     [headerMetaCursorFine],
   );
 
-  const handleHeaderMetaPointerMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
-    if (event.pointerType === "touch") {
-      return;
-    }
-    setHeaderMetaCursorPos((prev) => {
-      if (prev === null) {
-        return null;
+  const handleHeaderMetaPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (event.pointerType === "touch") {
+        return;
       }
-      return { x: event.clientX, y: event.clientY };
-    });
-  }, []);
+      setHeaderMetaCursorPos((prev) => {
+        if (prev === null) {
+          return null;
+        }
+        return { x: event.clientX, y: event.clientY };
+      });
+    },
+    [],
+  );
 
   const handleHeaderMetaPointerLeave = useCallback(() => {
     setHeaderMetaCursorPos(null);
@@ -317,7 +335,9 @@ export function BloomingDivaExperience({
       return;
     }
 
-    const ambientVelocity = isMarqueePausedRef.current ? 0 : baseSpeedRef.current;
+    const ambientVelocity = isMarqueePausedRef.current
+      ? 0
+      : baseSpeedRef.current;
     targetSpeedRef.current = ambientVelocity + interactionVelocityRef.current;
   }, []);
 
@@ -435,12 +455,23 @@ export function BloomingDivaExperience({
       setIsLandingInfoOpen(false);
     };
 
-    const listenerOptions: AddEventListenerOptions = { capture: true, passive: false };
-    document.addEventListener("pointerdown", handlePointerDown, listenerOptions);
+    const listenerOptions: AddEventListenerOptions = {
+      capture: true,
+      passive: false,
+    };
+    document.addEventListener(
+      "pointerdown",
+      handlePointerDown,
+      listenerOptions,
+    );
     mobileLandingInfoMq.addEventListener("change", handleMediaChange);
 
     return () => {
-      document.removeEventListener("pointerdown", handlePointerDown, listenerOptions);
+      document.removeEventListener(
+        "pointerdown",
+        handlePointerDown,
+        listenerOptions,
+      );
       mobileLandingInfoMq.removeEventListener("change", handleMediaChange);
     };
   }, [activeMode, isLandingInfoOpen]);
@@ -514,15 +545,24 @@ export function BloomingDivaExperience({
       return event.deltaX;
     };
 
-    const applyInteractionVelocity = (primaryDelta: number, gain: number, elapsedMs: number) => {
-      if (!Number.isFinite(primaryDelta) || primaryDelta === 0 || prefersReducedMotionRef.current) {
+    const applyInteractionVelocity = (
+      primaryDelta: number,
+      gain: number,
+      elapsedMs: number,
+    ) => {
+      if (
+        !Number.isFinite(primaryDelta) ||
+        primaryDelta === 0 ||
+        prefersReducedMotionRef.current
+      ) {
         return;
       }
 
       const boundedElapsedMs = Math.max(4, Math.min(elapsedMs, 180));
       const gestureSpeed = Math.abs(primaryDelta) / boundedElapsedMs;
       const speedBoost =
-        1 + Math.min(12, Math.pow(Math.max(0, gestureSpeed - 0.82), 1.1) * 1.22);
+        1 +
+        Math.min(12, Math.pow(Math.max(0, gestureSpeed - 0.82), 1.1) * 1.22);
       const distanceBoost =
         1 + Math.min(2.2, Math.pow(Math.abs(primaryDelta) / 140, 0.84) * 0.52);
       const impulse = -primaryDelta * gain * speedBoost * distanceBoost;
@@ -534,8 +574,10 @@ export function BloomingDivaExperience({
     };
 
     const rootStyles = getComputedStyle(document.documentElement);
-    baseSpeedRef.current = Number.parseFloat(rootStyles.getPropertyValue("--marquee-speed")) || 26;
-    const easing = Number.parseFloat(rootStyles.getPropertyValue("--marquee-ease")) || 0.085;
+    baseSpeedRef.current =
+      Number.parseFloat(rootStyles.getPropertyValue("--marquee-speed")) || 26;
+    const easing =
+      Number.parseFloat(rootStyles.getPropertyValue("--marquee-ease")) || 0.085;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let previousTime = performance.now();
     let groupWidth = 0;
@@ -547,12 +589,16 @@ export function BloomingDivaExperience({
       }
 
       groups.forEach((groupEl, index) => {
-        const x = (index - MARQUEE_CENTER_GROUP_INDEX) * groupWidth - marqueePhaseRef.current;
+        const x =
+          (index - MARQUEE_CENTER_GROUP_INDEX) * groupWidth -
+          marqueePhaseRef.current;
         groupEl.style.transform = `translate3d(${x}px, 0, 0)`;
       });
     };
 
-    const groups = Array.from(track.querySelectorAll<HTMLElement>(".marquee__group"));
+    const groups = Array.from(
+      track.querySelectorAll<HTMLElement>(".marquee__group"),
+    );
 
     const measure = () => {
       const measuredGroup = marqueeGroupRef.current;
@@ -567,7 +613,10 @@ export function BloomingDivaExperience({
       }
 
       track.style.height = `${group.getBoundingClientRect().height}px`;
-      marqueePhaseRef.current = normalizeMarqueePhase(marqueePhaseRef.current, groupWidth);
+      marqueePhaseRef.current = normalizeMarqueePhase(
+        marqueePhaseRef.current,
+        groupWidth,
+      );
       applyTransform();
     };
 
@@ -578,9 +627,12 @@ export function BloomingDivaExperience({
       const interactionDelta =
         interactionTargetVelocityRef.current - interactionVelocityRef.current;
       const attraction = interactionDelta * MARQUEE_INTERACTION_RESPONSE;
-      const damping = interactionVelocityRef.current * MARQUEE_INTERACTION_DAMPING;
+      const damping =
+        interactionVelocityRef.current * MARQUEE_INTERACTION_DAMPING;
       interactionVelocityRef.current += (attraction - damping) * delta;
-      interactionTargetVelocityRef.current *= Math.exp(-MARQUEE_INTERACTION_DAMPING * 0.72 * delta);
+      interactionTargetVelocityRef.current *= Math.exp(
+        -MARQUEE_INTERACTION_DAMPING * 0.72 * delta,
+      );
 
       if (Math.abs(interactionTargetVelocityRef.current) < 0.01) {
         interactionTargetVelocityRef.current = 0;
@@ -597,7 +649,10 @@ export function BloomingDivaExperience({
 
       if (groupWidth > 0 && speedRef.current !== 0) {
         marqueePhaseRef.current += speedRef.current * delta;
-        marqueePhaseRef.current = normalizeMarqueePhase(marqueePhaseRef.current, groupWidth);
+        marqueePhaseRef.current = normalizeMarqueePhase(
+          marqueePhaseRef.current,
+          groupWidth,
+        );
       }
 
       applyTransform();
@@ -624,7 +679,9 @@ export function BloomingDivaExperience({
     prefersReducedMotionRef.current = reduceMotion.matches;
     interactionVelocityRef.current = 0;
     interactionTargetVelocityRef.current = 0;
-    speedRef.current = prefersReducedMotionRef.current ? 0 : baseSpeedRef.current;
+    speedRef.current = prefersReducedMotionRef.current
+      ? 0
+      : baseSpeedRef.current;
     syncMarqueeTargetSpeed();
 
     measure();
@@ -649,7 +706,9 @@ export function BloomingDivaExperience({
     let touchX: number | null = null;
     let lastWheelEventAt = 0;
     let lastTouchMoveAt = 0;
-    const nonPassiveListenerOptions: AddEventListenerOptions = { passive: false };
+    const nonPassiveListenerOptions: AddEventListenerOptions = {
+      passive: false,
+    };
     const handleWheel: EventListener = (event) => {
       const wheelEvent = event as WheelEvent;
       if (wheelEvent.ctrlKey) {
@@ -672,7 +731,11 @@ export function BloomingDivaExperience({
       const now = performance.now();
       const elapsedMs = lastWheelEventAt === 0 ? 16 : now - lastWheelEventAt;
       lastWheelEventAt = now;
-      applyInteractionVelocity(-primaryDelta, MARQUEE_WHEEL_VELOCITY_GAIN, elapsedMs);
+      applyInteractionVelocity(
+        -primaryDelta,
+        MARQUEE_WHEEL_VELOCITY_GAIN,
+        elapsedMs,
+      );
     };
     const handleTouchStart: EventListener = (event) => {
       const touchEvent = event as TouchEvent;
@@ -727,7 +790,11 @@ export function BloomingDivaExperience({
       const now = performance.now();
       const elapsedMs = lastTouchMoveAt === 0 ? 16 : now - lastTouchMoveAt;
       lastTouchMoveAt = now;
-      applyInteractionVelocity(primaryDelta, MARQUEE_TOUCH_VELOCITY_GAIN, elapsedMs);
+      applyInteractionVelocity(
+        primaryDelta,
+        MARQUEE_TOUCH_VELOCITY_GAIN,
+        elapsedMs,
+      );
     };
     const clearTouchGesture: EventListener = () => {
       touchY = null;
@@ -736,10 +803,26 @@ export function BloomingDivaExperience({
     };
 
     window.addEventListener("wheel", handleWheel, nonPassiveListenerOptions);
-    window.addEventListener("touchstart", handleTouchStart, nonPassiveListenerOptions);
-    window.addEventListener("touchmove", handleTouchMove, nonPassiveListenerOptions);
-    window.addEventListener("touchend", clearTouchGesture, nonPassiveListenerOptions);
-    window.addEventListener("touchcancel", clearTouchGesture, nonPassiveListenerOptions);
+    window.addEventListener(
+      "touchstart",
+      handleTouchStart,
+      nonPassiveListenerOptions,
+    );
+    window.addEventListener(
+      "touchmove",
+      handleTouchMove,
+      nonPassiveListenerOptions,
+    );
+    window.addEventListener(
+      "touchend",
+      clearTouchGesture,
+      nonPassiveListenerOptions,
+    );
+    window.addEventListener(
+      "touchcancel",
+      clearTouchGesture,
+      nonPassiveListenerOptions,
+    );
 
     return () => {
       if (frameRef.current !== null) {
@@ -757,11 +840,31 @@ export function BloomingDivaExperience({
         groupEl.style.transform = "";
       });
       track.style.height = "";
-      window.removeEventListener("wheel", handleWheel, nonPassiveListenerOptions);
-      window.removeEventListener("touchstart", handleTouchStart, nonPassiveListenerOptions);
-      window.removeEventListener("touchmove", handleTouchMove, nonPassiveListenerOptions);
-      window.removeEventListener("touchend", clearTouchGesture, nonPassiveListenerOptions);
-      window.removeEventListener("touchcancel", clearTouchGesture, nonPassiveListenerOptions);
+      window.removeEventListener(
+        "wheel",
+        handleWheel,
+        nonPassiveListenerOptions,
+      );
+      window.removeEventListener(
+        "touchstart",
+        handleTouchStart,
+        nonPassiveListenerOptions,
+      );
+      window.removeEventListener(
+        "touchmove",
+        handleTouchMove,
+        nonPassiveListenerOptions,
+      );
+      window.removeEventListener(
+        "touchend",
+        clearTouchGesture,
+        nonPassiveListenerOptions,
+      );
+      window.removeEventListener(
+        "touchcancel",
+        clearTouchGesture,
+        nonPassiveListenerOptions,
+      );
       interactionVelocityRef.current = 0;
       interactionTargetVelocityRef.current = 0;
       syncMarqueeTargetSpeed();
@@ -879,6 +982,7 @@ export function BloomingDivaExperience({
           <header className="experience__header">
             <ExperienceTitle
               label={content.projectTitle}
+              overlineLabel={content.overlineLabel}
               preloader={showTitleIntro}
               onPreloaderComplete={handlePreloaderSnapComplete}
               onClick={handleLandingTitleClick}
@@ -904,9 +1008,12 @@ export function BloomingDivaExperience({
                       className={`experience__nav-item link-underline ${selected ? "is-active" : ""}`}
                       type="button"
                       onClick={() => {
-                        applyMode(activeMode === topic.key ? "landing" : topic.key, {
-                          updateUrl: true,
-                        });
+                        applyMode(
+                          activeMode === topic.key ? "landing" : topic.key,
+                          {
+                            updateUrl: true,
+                          },
+                        );
                       }}
                     >
                       {topic.label}
@@ -965,7 +1072,11 @@ export function BloomingDivaExperience({
                 <div className="apply-view__intro">
                   <div className="apply-view__copy">
                     {signupViewReveal.intro.map(({ paragraph, blockDelay }) => (
-                      <TextReveal key={paragraph} text={paragraph} blockDelay={blockDelay} />
+                      <TextReveal
+                        key={paragraph}
+                        text={paragraph}
+                        blockDelay={blockDelay}
+                      />
                     ))}
                   </div>
                   <div className="apply-view__title-block">
@@ -983,7 +1094,9 @@ export function BloomingDivaExperience({
                   </div>
                 </div>
                 <div className="apply-view__form">
-                  <BookingForm revealBaseLines={signupViewReveal.formBaseLines} />
+                  <BookingForm
+                    revealBaseLines={signupViewReveal.formBaseLines}
+                  />
                 </div>
               </article>
             ) : activeContent && topicReveal ? (
@@ -1008,9 +1121,15 @@ export function BloomingDivaExperience({
                   </div>
 
                   <div className="topic-detail__copy">
-                    {topicReveal.descriptions.map(({ paragraph, blockDelay }) => (
-                      <TextReveal key={paragraph} text={paragraph} blockDelay={blockDelay} />
-                    ))}
+                    {topicReveal.descriptions.map(
+                      ({ paragraph, blockDelay }) => (
+                        <TextReveal
+                          key={paragraph}
+                          text={paragraph}
+                          blockDelay={blockDelay}
+                        />
+                      ),
+                    )}
                   </div>
 
                   <a
@@ -1057,22 +1176,27 @@ export function BloomingDivaExperience({
                   }}
                 >
                   <div ref={marqueeTrackRef} className="marquee__track">
-                    {Array.from({ length: MARQUEE_GROUP_COUNT }, (_, groupIndex) => (
-                      <div
-                        key={groupIndex}
-                        ref={groupIndex === 0 ? marqueeGroupRef : undefined}
-                        className="marquee__group"
-                      >
-                        {marqueeTrack.map((image, index) => (
-                          <figure key={`${groupIndex}-${image}-${index}`} className="marquee__item">
-                            <img src={image} alt="" />
-                          </figure>
-                        ))}
-                      </div>
-                    ))}
+                    {Array.from(
+                      { length: MARQUEE_GROUP_COUNT },
+                      (_, groupIndex) => (
+                        <div
+                          key={groupIndex}
+                          ref={groupIndex === 0 ? marqueeGroupRef : undefined}
+                          className="marquee__group"
+                        >
+                          {marqueeTrack.map((image, index) => (
+                            <figure
+                              key={`${groupIndex}-${image}-${index}`}
+                              className="marquee__item"
+                            >
+                              <img src={image} alt="" />
+                            </figure>
+                          ))}
+                        </div>
+                      ),
+                    )}
                   </div>
                 </div>
-
               </div>
             )}
           </section>
@@ -1086,7 +1210,10 @@ export function BloomingDivaExperience({
                 as="span"
                 className="sticky-register__spots-hint"
                 text={content.signup.spotsLeftText}
-                blockDelay={Math.max(0, registerCtaRevealDelay - LINE_STAGGER_S)}
+                blockDelay={Math.max(
+                  0,
+                  registerCtaRevealDelay - LINE_STAGGER_S,
+                )}
               />
             ) : null}
             <div className="experience__register-cta-button-wrap">
@@ -1097,7 +1224,10 @@ export function BloomingDivaExperience({
                 type="button"
                 onClick={
                   activeMode === "signup"
-                    ? () => applyMode(modeBeforeSignupRef.current, { updateUrl: true })
+                    ? () =>
+                        applyMode(modeBeforeSignupRef.current, {
+                          updateUrl: true,
+                        })
                     : toggleRegisterMode
                 }
               >
@@ -1139,26 +1269,38 @@ export function BloomingDivaExperience({
           <button
             className="landing-info-panel__toggle interactive"
             type="button"
-            aria-label={isLandingInfoOpen ? "Hide footer details" : "Show footer details"}
+            aria-label={
+              isLandingInfoOpen ? "Hide footer details" : "Show footer details"
+            }
             aria-controls="landing-info-panel-body"
             aria-expanded={isLandingInfoOpen}
             onClick={toggleLandingInfo}
           >
-            <span className="landing-info-panel__toggle-icon" aria-hidden="true" />
+            <span
+              className="landing-info-panel__toggle-icon"
+              aria-hidden="true"
+            />
           </button>
 
-          <div id="landing-info-panel-body" className="landing-info-panel__body">
+          <div
+            id="landing-info-panel-body"
+            className="landing-info-panel__body"
+          >
             <div className="landing-info-panel__description">
-              {landingInfoOverlayReveal.introParagraphs.map(({ paragraph, blockDelay }, index) => (
-                <TextReveal
-                  key={`info-intro-${index}`}
-                  text={paragraph}
-                  blockDelay={blockDelay}
-                  renderLine={
-                    paragraph.includes(STUDIO_ISKRA_MARKER) ? renderStudioIskraInLine : undefined
-                  }
-                />
-              ))}
+              {landingInfoOverlayReveal.introParagraphs.map(
+                ({ paragraph, blockDelay }, index) => (
+                  <TextReveal
+                    key={`info-intro-${index}`}
+                    text={paragraph}
+                    blockDelay={blockDelay}
+                    renderLine={
+                      paragraph.includes(STUDIO_ISKRA_MARKER)
+                        ? renderStudioIskraInLine
+                        : undefined
+                    }
+                  />
+                ),
+              )}
             </div>
 
             <div className="landing-info-panel__info">
@@ -1197,7 +1339,10 @@ export function BloomingDivaExperience({
         ? createPortal(
             <div
               className="experience__meta-cursor-follow"
-              style={{ left: headerMetaCursorPos.x, top: headerMetaCursorPos.y }}
+              style={{
+                left: headerMetaCursorPos.x,
+                top: headerMetaCursorPos.y,
+              }}
               aria-hidden
             >
               {headerMetaCursorLabel}

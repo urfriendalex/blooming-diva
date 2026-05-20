@@ -16,6 +16,14 @@ const TITLE_INTRO_FROM = {
   force3D: true,
 } as const;
 
+const OVERLINE_INTRO_FROM = {
+  opacity: 0,
+  filter: "blur(4px)",
+  force3D: true,
+} as const;
+
+const INTRO_BEAT_GAP = 0.07;
+
 /** Stagger opacity/blur ahead of depth so the reveal eases in rather than popping. */
 function animateTitleIntro(track: HTMLElement): Promise<void> {
   return new Promise((resolve) => {
@@ -24,18 +32,41 @@ function animateTitleIntro(track: HTMLElement): Promise<void> {
         defaults: { force3D: true, transformOrigin: "50% 50%" },
         onComplete: resolve,
       })
-      .to(track, { opacity: 1, duration: 0.62, ease: "power2.out" }, 0)
-      .to(track, { filter: "blur(0px)", duration: 0.88, ease: "power2.out" }, 0.05)
+      .to(track, { opacity: 1, duration: 0.52, ease: "power2.out" }, 0)
       .to(
         track,
-        { scale: 1, z: 0, duration: 1.08, ease: "power3.out" },
-        0,
+        { filter: "blur(0px)", duration: 0.74, ease: "power2.out" },
+        0.04,
+      )
+      .to(track, { scale: 1, z: 0, duration: 0.9, ease: "power3.out" }, 0);
+  });
+}
+
+function animateOverlineIntro(overline: HTMLElement): Promise<void> {
+  return new Promise((resolve) => {
+    gsap
+      .timeline({ defaults: { force3D: true }, onComplete: resolve })
+      .to(overline, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0)
+      .to(
+        overline,
+        { filter: "blur(0px)", duration: 0.52, ease: "power2.out" },
+        0.03,
       );
   });
 }
 
+async function animateIntroSequence(
+  track: HTMLElement,
+  overline: HTMLElement,
+): Promise<void> {
+  await animateTitleIntro(track);
+  await gsap.to({}, { duration: INTRO_BEAT_GAP });
+  await animateOverlineIntro(overline);
+}
+
 type ExperienceTitleProps = {
   label: string;
+  overlineLabel: string;
   onClick: () => void;
   /** When true, run the intro: centered reveal, then Flip to header after window load. */
   preloader?: boolean;
@@ -95,6 +126,7 @@ function getBleedFrame(bleed: HTMLElement) {
 
 function ExperienceTitleComponent({
   label,
+  overlineLabel,
   onClick,
   preloader = false,
   onPreloaderComplete,
@@ -167,6 +199,9 @@ function ExperienceTitleComponent({
       const track = button?.querySelector<HTMLElement>(
         ".experience__title-reveal-track",
       );
+      const overline = button?.querySelector<HTMLElement>(
+        ".experience__title-overline",
+      );
       const clip = button?.querySelector<HTMLElement>(
         ".experience__title-reveal-clip",
       );
@@ -183,6 +218,10 @@ function ExperienceTitleComponent({
           clearProps: "opacity,transform,filter,transformOrigin",
         });
       }
+      if (overline) {
+        gsap.killTweensOf(overline);
+        gsap.set(overline, { clearProps: "opacity,filter" });
+      }
       introStartedRef.current = false;
       introFinishedRef.current = false;
       return;
@@ -196,10 +235,13 @@ function ExperienceTitleComponent({
     const track = button?.querySelector<HTMLElement>(
       ".experience__title-reveal-track",
     );
+    const overline = button?.querySelector<HTMLElement>(
+      ".experience__title-overline",
+    );
     const clip = button?.querySelector<HTMLElement>(
       ".experience__title-reveal-clip",
     );
-    if (!bleed || !button || !track || !clip) {
+    if (!bleed || !button || !track || !overline || !clip) {
       return;
     }
 
@@ -234,9 +276,11 @@ function ExperienceTitleComponent({
         if (reduceMotion) {
           gsap.set(clip, { clearProps: "perspective" });
           gsap.set(track, { opacity: 1, scale: 1, z: 0, filter: "blur(0px)" });
+          gsap.set(overline, { opacity: 1, filter: "blur(0px)" });
         } else {
           gsap.set(clip, { perspective: 1100 });
           gsap.set(track, TITLE_INTRO_FROM);
+          gsap.set(overline, OVERLINE_INTRO_FROM);
         }
 
         flushSync(() => {
@@ -261,8 +305,9 @@ function ExperienceTitleComponent({
         }
 
         if (!reduceMotion) {
-          await animateTitleIntro(track);
+          await animateIntroSequence(track, overline);
           gsap.set(track, { clearProps: "transform,filter,transformOrigin" });
+          gsap.set(overline, { clearProps: "filter" });
           gsap.set(clip, { clearProps: "perspective" });
         }
         if (cancelled) {
@@ -291,7 +336,7 @@ function ExperienceTitleComponent({
         gsap.set(button, { opacity: 1 });
 
         Flip.from(state, {
-          duration: reduceMotion ? 0.05 : 0.8625,
+          duration: reduceMotion ? 0.05 : 0.75,
           ease: "power3.inOut",
           absolute: true,
           simple: true,
@@ -300,6 +345,7 @@ function ExperienceTitleComponent({
             gsap.set(button, { clearProps: "transform" });
             gsap.set(button, { opacity: 1 });
             gsap.set(track, { clearProps: "opacity,transform,filter" });
+            gsap.set(overline, { clearProps: "opacity,filter" });
             onPreloaderComplete?.();
           },
         });
@@ -330,6 +376,9 @@ function ExperienceTitleComponent({
       >
         <span className="experience__title-reveal-clip">
           <span className="experience__title-reveal-track">{label}</span>
+        </span>
+        <span className="experience__title-overline" aria-hidden="true">
+          {overlineLabel}
         </span>
       </button>
     </div>

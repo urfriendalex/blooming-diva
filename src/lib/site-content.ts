@@ -16,6 +16,7 @@ export type SiteContent = {
     description: string;
   };
   projectTitle: string;
+  overlineLabel: string;
   location: string;
   date: string;
   /** Short price for the header meta strip (keep in sync with signup pricing). */
@@ -54,6 +55,7 @@ export const siteContent: SiteContent = {
       "BLOOMING DIVA is a one-day photo experience in Warsaw about femininity, sensuality, soft light, flowers, styling, makeup, and the beauty of being yourself.",
   },
   projectTitle: "blooming diva",
+  overlineLabel: "photo day",
   location: "WARSAW",
   date: "30-31 МАЯ",
   priceLabel: "1250 PLN",
@@ -89,7 +91,8 @@ export const siteContent: SiteContent = {
       instagramPlaceholder: "@instagram",
     },
     button: "ОСТАВИТЬ ЗАЯВКУ",
-    helperText: "Количество мест строго ограничено. После заявки мы свяжемся с вами в Instagram.",
+    helperText:
+      "Количество мест строго ограничено. После заявки мы свяжемся с вами в Instagram.",
   },
   topics: [
     {

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/sync-favicons.mjs && next build",
+    "favicons:sync": "node scripts/sync-favicons.mjs",
     "start": "next start",
     "lint": "eslint",
     "media:sync": "node scripts/sync-media.mjs"
@@ -24,6 +25,7 @@
     "@types/react-dom": "^19.2.2",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.2.3",
+    "png-to-ico": "^2.1.8",
     "sharp": "^0.34.5",
     "typescript": "^5.9.3"
   },

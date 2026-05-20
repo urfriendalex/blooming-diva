@@ -71,7 +71,8 @@ a {
 @media (prefers-reduced-motion: no-preference) {
   .link-underline::after,
   .text-link--drawn::after {
-    transition: transform var(--link-underline-duration) var(--ease-link-underline);
+    transition: transform var(--link-underline-duration)
+      var(--ease-link-underline);
   }
 }
 
@@ -286,6 +287,7 @@ input {
 }
 
 .experience__title {
+  position: relative;
   display: block;
   box-sizing: border-box;
   width: 100%;
@@ -318,7 +320,8 @@ input {
 }
 
 /* React toggles this the moment the fixed intro title should become visible. */
-.experience--preloader-intro .experience__title.experience__title--intro-surface {
+.experience--preloader-intro
+  .experience__title.experience__title--intro-surface {
   opacity: 1;
 }
 
@@ -370,7 +373,25 @@ input {
   pointer-events: none;
 }
 
+.experience__title-overline {
+  position: absolute;
+  top: 88%;
+  right: 4%;
+  z-index: 0;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-title), var(--font-title-fallback);
+  font-size: clamp(0.9375rem, 5.8vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--color-ink);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .experience__title-reveal-clip {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   line-height: inherit;
@@ -378,12 +399,15 @@ input {
 }
 
 .experience__title-reveal-track {
+  position: relative;
+  z-index: 1;
   display: inline-block;
   white-space: nowrap;
   text-align: inherit;
 }
 
-.experience__title--intro-surface .experience__title-reveal-track {
+.experience__title--intro-surface .experience__title-reveal-track,
+.experience__title--intro-surface .experience__title-overline {
   will-change: transform, opacity, filter;
 }
 
@@ -752,7 +776,8 @@ button.experience__meta--cta:focus-visible {
 
 @media (prefers-reduced-motion: no-preference) {
   .topic-detail__link::after {
-    transition: transform var(--link-underline-duration) var(--ease-link-underline);
+    transition: transform var(--link-underline-duration)
+      var(--ease-link-underline);
   }
 }
 
@@ -1114,7 +1139,8 @@ button.experience__meta--cta:focus-visible {
 
 @media (prefers-reduced-motion: no-preference) {
   .signup-form__field::after {
-    transition: clip-path var(--link-underline-duration) var(--ease-link-underline);
+    transition: clip-path var(--link-underline-duration)
+      var(--ease-link-underline);
   }
 }
 
@@ -1232,7 +1258,8 @@ button.experience__meta--cta:focus-visible {
 
 @media (prefers-reduced-motion: no-preference) {
   .signup-form__button::after {
-    transition: transform var(--link-underline-duration) var(--ease-link-underline);
+    transition: transform var(--link-underline-duration)
+      var(--ease-link-underline);
   }
 }
 
@@ -1243,7 +1270,8 @@ button.experience__meta--cta:focus-visible {
 
 .signup-form__button.text-reveal-underline--ready:has(.text-reveal)::before {
   transform: scaleX(1);
-  transition: transform var(--link-underline-duration) var(--ease-link-underline);
+  transition: transform var(--link-underline-duration)
+    var(--ease-link-underline);
 }
 
 /* Keep label ink — `.interactive` otherwise tints text on hover/focus */
@@ -1404,9 +1432,7 @@ button.experience__meta--cta:focus-visible {
   width: min(23.625rem, calc(100vw - 2 * var(--landing-info-panel-h-edge)));
   height: min(28rem, calc(100svh - 6rem));
   min-height: 22rem;
-  padding:
-    var(--landing-info-panel-pad)
-    var(--landing-info-panel-pad)
+  padding: var(--landing-info-panel-pad) var(--landing-info-panel-pad)
     var(--landing-info-panel-toggle-reserve);
   box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08);
 }
@@ -1417,9 +1443,7 @@ button.experience__meta--cta:focus-visible {
     width: min(23.625rem, calc(100vw - 2 * var(--landing-info-panel-h-edge)));
     height: min(28rem, calc(100svh - 6rem));
     min-height: 22rem;
-    padding:
-      var(--landing-info-panel-pad)
-      var(--landing-info-panel-pad)
+    padding: var(--landing-info-panel-pad) var(--landing-info-panel-pad)
       var(--landing-info-panel-toggle-reserve);
     box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08);
   }
@@ -1660,11 +1684,13 @@ button.experience__meta--cta:focus-visible {
   }
 
   /* Hide fixed frost UI until title snap (same window as nav/main reveal); avoids floating over the shell early. */
-  .experience--preloader:not(.experience--preloader-reveal) .landing-panel__cta {
+  .experience--preloader:not(.experience--preloader-reveal)
+    .landing-panel__cta {
     visibility: hidden;
   }
 
-  main.experience--preloader:not(.experience--preloader-reveal) ~ .landing-info-panel {
+  main.experience--preloader:not(.experience--preloader-reveal)
+    ~ .landing-info-panel {
     visibility: hidden;
   }
 
