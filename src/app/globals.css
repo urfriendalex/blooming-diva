@@ -285,8 +285,8 @@ input {
   margin-inline: calc(-1 * var(--page-pad-x));
   box-sizing: border-box;
   overflow-x: clip;
-  /* `overflow-x: clip` forces the block axis to clip in WebKit — pad generously so script ascenders fit. */
-  padding-block: clamp(10px, 2.4vw, 18px);
+  /* Room for script ascenders/descenders inside the horizontal clip strip */
+  padding-block: 0.12em;
   z-index: 31;
 }
 
@@ -308,7 +308,7 @@ input {
   font-family: var(--font-title), var(--font-title-fallback);
   font-size: clamp(2.8rem, 14vw, 9.5rem);
   font-weight: 400;
-  line-height: 1.15;
+  line-height: 1.1;
   letter-spacing: 0em;
   text-transform: none;
   text-align: left;
@@ -1652,7 +1652,7 @@ button.experience__meta--cta:focus-visible {
   }
 
   .experience__title {
-    line-height: 1.12;
+    line-height: 1.08;
   }
 
   .experience__nav-row {
