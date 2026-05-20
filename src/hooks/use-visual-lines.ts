@@ -49,12 +49,14 @@ export function useVisualLines<T extends HTMLElement>(
   }, [relayout, ref]);
 
   useLayoutEffect(() => {
+    // Measure synchronously on mount so TextReveal never paints full copy in one line.
+    relayout();
+
     if (typeof document === "undefined" || !document.fonts) {
-      scheduleLayout();
       return;
     }
     void document.fonts.ready.then(scheduleLayout);
-  }, [scheduleLayout]);
+  }, [relayout, scheduleLayout]);
 
   useEffect(() => {
     if (typeof window === "undefined") {

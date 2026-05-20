@@ -676,6 +676,23 @@ button.experience__meta--cta:focus-visible {
   display: block;
   line-height: inherit;
   transform-origin: bottom center;
+  /* Match GSAP `yPercent: 100` before JS runs — avoids a visible fallback on refresh. */
+  transform: translate3d(0, 100%, 0);
+}
+
+.text-reveal--measuring .text-reveal__inner {
+  transform: translate3d(0, 100%, 0);
+}
+
+.text-reveal--revealed .text-reveal__inner {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-reveal__inner,
+  .text-reveal--measuring .text-reveal__inner {
+    transform: none;
+  }
 }
 
 .text-reveal--as-span {
@@ -748,6 +765,12 @@ button.experience__meta--cta:focus-visible {
   font-size: clamp(0.75rem, 1.1vw, 1.02rem);
   font-weight: 700;
   line-height: 1.28;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/* Inherit topic sizing rules so Safari does not auto-inflate copy during the measuring frame. */
+.topic-detail .text-reveal {
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
 }

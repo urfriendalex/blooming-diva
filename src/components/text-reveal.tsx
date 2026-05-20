@@ -64,6 +64,10 @@ function markUnderlineRevealed(hosts: HTMLElement[]) {
   });
 }
 
+function setRevealedClass(root: HTMLElement, revealed: boolean) {
+  root.classList.toggle("text-reveal--revealed", revealed);
+}
+
 export function TextReveal({
   text,
   as: tag = "p",
@@ -96,13 +100,17 @@ export function TextReveal({
 
     if (playOnce && hasAnimatedRef.current) {
       gsap.set(inners, { yPercent: 0 });
+      setRevealedClass(root, true);
       markUnderlineRevealed(underlineHosts);
       return;
     }
 
+    setRevealedClass(root, false);
+
     const ctx = gsap.context(() => {
       if (reduceMotion) {
         gsap.set(inners, { yPercent: 0 });
+        setRevealedClass(root, true);
         markUnderlineRevealed(underlineHosts);
         if (playOnce) {
           hasAnimatedRef.current = true;
@@ -135,6 +143,7 @@ export function TextReveal({
             if (playOnce) {
               hasAnimatedRef.current = true;
             }
+            setRevealedClass(root, true);
             markUnderlineRevealed(underlineHosts);
           },
         });
@@ -172,6 +181,7 @@ export function TextReveal({
     return () => {
       ctx.revert();
       if (!(playOnce && hasAnimatedRef.current)) {
+        setRevealedClass(root, false);
         clearUnderlineState(underlineHosts);
       }
     };
@@ -179,6 +189,7 @@ export function TextReveal({
 
   const mergedClass = [
     "text-reveal",
+    lines === null ? "text-reveal--measuring" : "",
     tag === "span" ? "text-reveal--as-span" : "",
     className,
   ]
@@ -187,14 +198,14 @@ export function TextReveal({
 
   const children: ReactNode =
     lines === null ? (
+      /* Width/typography come from the root; copy stays off-screen until lines are measured. */
       <span
         className={["text-reveal__line", "pretext-flow__line", lineClassName]
           .filter(Boolean)
           .join(" ")}
+        aria-hidden="true"
       >
-        <span className="text-reveal__inner">
-          {renderLine ? renderLine(text, 0) : text}
-        </span>
+        <span className="text-reveal__inner">{"\u00a0"}</span>
       </span>
     ) : lines.length === 0 ? null : (
       lines.map((line, index) => (
