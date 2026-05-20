@@ -64,8 +64,8 @@ function markUnderlineRevealed(hosts: HTMLElement[]) {
   });
 }
 
-function setRevealedClass(root: HTMLElement, revealed: boolean) {
-  root.classList.toggle("text-reveal--revealed", revealed);
+function showRevealed(inners: gsap.TweenTarget) {
+  gsap.set(inners, { yPercent: 0, clearProps: "transform" });
 }
 
 export function TextReveal({
@@ -99,18 +99,18 @@ export function TextReveal({
     const underlineHosts = getUnderlineHosts(root);
 
     if (playOnce && hasAnimatedRef.current) {
-      gsap.set(inners, { yPercent: 0 });
-      setRevealedClass(root, true);
+      showRevealed(inners);
+      root.classList.add("text-reveal--armed", "text-reveal--revealed");
       markUnderlineRevealed(underlineHosts);
       return;
     }
 
-    setRevealedClass(root, false);
+    root.classList.remove("text-reveal--revealed");
 
     const ctx = gsap.context(() => {
       if (reduceMotion) {
-        gsap.set(inners, { yPercent: 0 });
-        setRevealedClass(root, true);
+        showRevealed(inners);
+        root.classList.add("text-reveal--armed", "text-reveal--revealed");
         markUnderlineRevealed(underlineHosts);
         if (playOnce) {
           hasAnimatedRef.current = true;
@@ -125,6 +125,7 @@ export function TextReveal({
         transformOrigin: "50% 100%",
         force3D: false,
       });
+      root.classList.add("text-reveal--armed");
 
       let played = false;
       const play = () => {
@@ -140,14 +141,20 @@ export function TextReveal({
           ease: EASE_TRANSFORM,
           force3D: false,
           onComplete: () => {
+            showRevealed(inners);
+            root.classList.add("text-reveal--revealed");
             if (playOnce) {
               hasAnimatedRef.current = true;
             }
-            setRevealedClass(root, true);
             markUnderlineRevealed(underlineHosts);
           },
         });
       };
+
+      if (isElementInViewport(root)) {
+        play();
+        return;
+      }
 
       const observer = new IntersectionObserver(
         (entries) => {
@@ -166,22 +173,15 @@ export function TextReveal({
 
       observer.observe(root);
 
-      const tryPlayIfAlreadyVisible = () => {
-        if (isElementInViewport(root)) {
-          play();
-          observer.disconnect();
-        }
+      return () => {
+        observer.disconnect();
       };
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(tryPlayIfAlreadyVisible);
-      });
     }, root);
 
     return () => {
       ctx.revert();
+      root.classList.remove("text-reveal--armed", "text-reveal--revealed");
       if (!(playOnce && hasAnimatedRef.current)) {
-        setRevealedClass(root, false);
         clearUnderlineState(underlineHosts);
       }
     };
@@ -197,17 +197,7 @@ export function TextReveal({
     .join(" ");
 
   const children: ReactNode =
-    lines === null ? (
-      /* Width/typography come from the root; copy stays off-screen until lines are measured. */
-      <span
-        className={["text-reveal__line", "pretext-flow__line", lineClassName]
-          .filter(Boolean)
-          .join(" ")}
-        aria-hidden="true"
-      >
-        <span className="text-reveal__inner">{"\u00a0"}</span>
-      </span>
-    ) : lines.length === 0 ? null : (
+    lines === null ? null : lines.length === 0 ? null : (
       lines.map((line, index) => (
         <span
           key={`${index}-${line.slice(0, 24)}`}

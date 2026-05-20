@@ -10,6 +10,10 @@ import {
 
 import { measureVisualLines } from "@/lib/visual-line-wrap";
 
+function linesEqual(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((line, index) => line === b[index]);
+}
+
 /**
  * Splits `text` into visual lines matching normal HTML/CSS wrapping on `ref`
  * (width, typography, `pre-line` for `\n`), for line-by-line reveals.
@@ -23,14 +27,22 @@ export function useVisualLines<T extends HTMLElement>(
   const relayout = useCallback(() => {
     const el = ref.current;
     if (!el) {
-      return;
+      return false;
     }
 
-    if (el.getBoundingClientRect().width <= 0) {
-      return;
+    const width = el.getBoundingClientRect().width;
+    if (width <= 0) {
+      return false;
     }
 
-    setLines(measureVisualLines(text, el));
+    const next = measureVisualLines(text, el);
+    setLines((prev) => {
+      if (prev && linesEqual(prev, next)) {
+        return prev;
+      }
+      return next;
+    });
+    return true;
   }, [text, ref]);
 
   const scheduleLayout = useCallback(() => {
@@ -39,18 +51,17 @@ export function useVisualLines<T extends HTMLElement>(
       if (!el) {
         return;
       }
-      if (el.getBoundingClientRect().width <= 0) {
+      if (!relayout()) {
         requestAnimationFrame(tick);
-        return;
       }
-      relayout();
     };
     tick();
   }, [relayout, ref]);
 
   useLayoutEffect(() => {
-    // Measure synchronously on mount so TextReveal never paints full copy in one line.
-    relayout();
+    if (!relayout()) {
+      scheduleLayout();
+    }
 
     if (typeof document === "undefined" || !document.fonts) {
       return;
@@ -83,8 +94,14 @@ export function useVisualLines<T extends HTMLElement>(
     if (!el) {
       return;
     }
-    const ro = new ResizeObserver(() => {
-      scheduleLayout();
+
+    let lastWidth = 0;
+    const ro = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? 0;
+      if (width > 0 && width !== lastWidth) {
+        lastWidth = width;
+        scheduleLayout();
+      }
     });
     ro.observe(el);
     return () => {

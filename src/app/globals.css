@@ -676,22 +676,22 @@ button.experience__meta--cta:focus-visible {
   display: block;
   line-height: inherit;
   transform-origin: bottom center;
-  /* Match GSAP `yPercent: 100` before JS runs — avoids a visible fallback on refresh. */
-  transform: translate3d(0, 100%, 0);
 }
 
-.text-reveal--measuring .text-reveal__inner {
-  transform: translate3d(0, 100%, 0);
+/* Hide copy until GSAP arms the mask (no CSS transform — that conflicts with GSAP on Safari). */
+.text-reveal--measuring,
+.text-reveal:not(.text-reveal--armed) .text-reveal__inner {
+  visibility: hidden;
 }
 
-.text-reveal--revealed .text-reveal__inner {
-  transform: none;
+.text-reveal--armed .text-reveal__inner {
+  visibility: visible;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .text-reveal__inner,
-  .text-reveal--measuring .text-reveal__inner {
-    transform: none;
+  .text-reveal--measuring,
+  .text-reveal:not(.text-reveal--armed) .text-reveal__inner {
+    visibility: visible;
   }
 }
 
