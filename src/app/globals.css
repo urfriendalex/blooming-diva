@@ -726,8 +726,8 @@ button.experience__meta--cta:focus-visible {
 .topic-detail {
   display: grid;
   gap: clamp(2rem, 3vw, 3rem);
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .topic-detail__intro {
@@ -756,8 +756,21 @@ button.experience__meta--cta:focus-visible {
   font-size: clamp(0.75rem, 1.1vw, 1.02rem);
   font-weight: 700;
   line-height: 1.28;
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.topic-detail__copy > .text-reveal,
+.topic-detail__copy > .text-reveal .text-reveal__line,
+.topic-detail__copy > .text-reveal .text-reveal__inner {
+  color: inherit;
+  font: inherit;
+  font-size: clamp(0.75rem, 1.1vw, 1.02rem);
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .topic-detail__copy p {
