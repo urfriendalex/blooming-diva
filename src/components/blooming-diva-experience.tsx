@@ -113,13 +113,32 @@ function getTopicStickyLineIndex(
   return c + GRID_REVEAL_TAIL_LINE_SLOTS;
 }
 
+function getInitialExperienceState(content: SiteContent): {
+  mode: ExperienceMode;
+  topic: TopicKey | null;
+  intro: "intro" | "reveal" | "idle";
+} {
+  if (typeof window === "undefined") {
+    return { mode: "landing", topic: null, intro: "intro" };
+  }
+
+  const keys = new Set(content.topics.map((topic) => topic.key));
+  const mode = parseHashMode(window.location.hash, keys);
+  return {
+    mode,
+    topic: mode === "landing" || mode === "signup" ? null : mode,
+    intro: mode === "landing" ? "intro" : "idle",
+  };
+}
+
 export function BloomingDivaExperience({
   content,
   marqueeImages,
   topicImages,
 }: ExperienceProps) {
-  const [activeMode, setActiveMode] = useState<ExperienceMode>("landing");
-  const [activeTopic, setActiveTopic] = useState<TopicKey | null>(null);
+  const [bootState] = useState(() => getInitialExperienceState(content));
+  const [activeMode, setActiveMode] = useState<ExperienceMode>(bootState.mode);
+  const [activeTopic, setActiveTopic] = useState<TopicKey | null>(bootState.topic);
   const [isLandingInfoOpen, setIsLandingInfoOpen] = useState(false);
   const landingInfoPanelRef = useRef<HTMLDivElement | null>(null);
   const marqueeViewportRef = useRef<HTMLDivElement | null>(null);
@@ -136,7 +155,7 @@ export function BloomingDivaExperience({
   const prefersReducedMotionRef = useRef(false);
   const frameRef = useRef<number | null>(null);
   const [introState, setIntroState] = useState<"intro" | "reveal" | "idle">(
-    "intro",
+    bootState.intro,
   );
   /** Bumps when returning to landing from a topic or signup so the marquee can re-enter in sync with line reveals. */
   const [marqueeLandingEnterSeq, setMarqueeLandingEnterSeq] = useState(0);
@@ -151,14 +170,7 @@ export function BloomingDivaExperience({
     [content.topics],
   );
   /** Skip landing preloader when opening/refreshing a deep-linked topic or signup hash. */
-  const [skipLandingIntro] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      parseHashMode(
-        window.location.hash,
-        new Set(content.topics.map((topic) => topic.key)),
-      ) !== "landing",
-  );
+  const [skipLandingIntro] = useState(() => bootState.mode !== "landing");
 
   const headerMetaReveal = useMemo(() => {
     let c = 0;
