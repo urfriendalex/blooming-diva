@@ -71,48 +71,6 @@ const MARQUEE_INTERACTION_DAMPING = 7.8;
 const MARQUEE_WHEEL_VELOCITY_GAIN = 10.25;
 const MARQUEE_TOUCH_VELOCITY_GAIN = 12.5;
 
-function parseHashMode(
-  hash: string,
-  topicKeys: ReadonlySet<TopicKey>,
-): ExperienceMode {
-  const normalized = hash.replace(/^#/, "").trim().toLowerCase();
-
-  if (normalized === "register") {
-    return "signup";
-  }
-
-  if (topicKeys.has(normalized as TopicKey)) {
-    return normalized as TopicKey;
-  }
-
-  return "landing";
-}
-
-function getLandingRegisterRevealDelay(content: SiteContent): number {
-  let c = 0;
-  for (const paragraph of content.introText) {
-    c += estimateLineCount(paragraph);
-  }
-  return revealAfterLines(c);
-}
-
-function getTopicStickyLineIndex(
-  content: SiteContent,
-  topicKey: TopicKey,
-): number {
-  const topic = content.topics.find((item) => item.key === topicKey);
-  if (!topic) {
-    return 0;
-  }
-
-  let c = estimateLineCount(topic.person);
-  for (const paragraph of topic.description) {
-    c += estimateLineCount(paragraph);
-  }
-  c += estimateLineCount(topic.ctaLabel);
-  return c + GRID_REVEAL_TAIL_LINE_SLOTS;
-}
-
 export function BloomingDivaExperience({
   content,
   marqueeImages,
@@ -150,15 +108,6 @@ export function BloomingDivaExperience({
     () => new Set(content.topics.map((topic) => topic.key)),
     [content.topics],
   );
-  /** Skip landing preloader when opening/refreshing a deep-linked topic or signup hash. */
-  const [skipLandingIntro] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      parseHashMode(
-        window.location.hash,
-        new Set(content.topics.map((topic) => topic.key)),
-      ) !== "landing",
-  );
 
   const headerMetaReveal = useMemo(() => {
     let c = 0;
@@ -170,10 +119,13 @@ export function BloomingDivaExperience({
     return { locationDelay, dateDelay, priceDelay };
   }, [content.location, content.date]);
 
-  const landingRegisterRevealDelay = useMemo(
-    () => getLandingRegisterRevealDelay(content),
-    [content],
-  );
+  const landingRegisterRevealDelay = useMemo(() => {
+    let c = 0;
+    for (const paragraph of content.introText) {
+      c += estimateLineCount(paragraph);
+    }
+    return revealAfterLines(c);
+  }, [content.introText]);
 
   const signupViewReveal = useMemo(() => {
     const introParagraph = content.signup.intro.join(" ");
@@ -237,8 +189,20 @@ export function BloomingDivaExperience({
     return marqueeImages.slice(0, 56);
   }, [marqueeImages]);
 
-  const parseHash = useCallback(
-    (hash: string) => parseHashMode(hash, topicKeys),
+  const parseHashMode = useCallback(
+    (hash: string): ExperienceMode => {
+      const normalized = hash.replace(/^#/, "").trim().toLowerCase();
+
+      if (normalized === "register") {
+        return "signup";
+      }
+
+      if (topicKeys.has(normalized as TopicKey)) {
+        return normalized as TopicKey;
+      }
+
+      return "landing";
+    },
     [topicKeys],
   );
 
@@ -246,16 +210,14 @@ export function BloomingDivaExperience({
   const modeBeforeSignupRef = useRef<ExperienceMode>("landing");
   /** One register CTA for the whole experience — delay is fixed at first paint (landing vs topic hash). */
   const [registerCtaRevealDelay] = useState(() => {
-    if (typeof window === "undefined") {
-      return getLandingRegisterRevealDelay(content);
-    }
+    const initialMode =
+      typeof window === "undefined"
+        ? "landing"
+        : parseHashMode(window.location.hash);
 
-    const initialMode = parseHashMode(window.location.hash, topicKeys);
-    if (initialMode !== "landing" && initialMode !== "signup") {
-      return revealAfterLines(getTopicStickyLineIndex(content, initialMode));
-    }
-
-    return getLandingRegisterRevealDelay(content);
+    return initialMode !== "landing" && initialMode !== "signup" && topicReveal
+      ? revealAfterLines(topicReveal.stickyLineIndex)
+      : landingRegisterRevealDelay;
   });
 
   const applyMode = useCallback(
@@ -514,13 +476,13 @@ export function BloomingDivaExperience({
     };
   }, [activeMode, isLandingInfoOpen]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
     const syncFromHash = () => {
-      applyMode(parseHash(window.location.hash), { updateUrl: false });
+      applyMode(parseHashMode(window.location.hash));
     };
 
     syncFromHash();
@@ -529,7 +491,7 @@ export function BloomingDivaExperience({
     return () => {
       window.removeEventListener("hashchange", syncFromHash);
     };
-  }, [applyMode, parseHash]);
+  }, [applyMode, parseHashMode]);
 
   useEffect(() => {
     if (activeMode !== "landing") {
@@ -910,8 +872,7 @@ export function BloomingDivaExperience({
   }, [activeMode, marqueeTrack.length, syncMarqueeTargetSpeed]);
 
   const onLanding = activeMode === "landing";
-  const showTitleIntro =
-    onLanding && introState === "intro" && !skipLandingIntro;
+  const showTitleIntro = onLanding && introState === "intro";
   const showPreloaderShell = onLanding && introState !== "idle";
 
   const navRowRef = useRef<HTMLDivElement | null>(null);
@@ -1139,7 +1100,7 @@ export function BloomingDivaExperience({
                 </div>
               </article>
             ) : activeContent && topicReveal ? (
-              <article className="topic-detail" key={activeContent.key}>
+              <article className="topic-detail">
                 <div className="topic-detail__intro">
                   <div className="topic-detail__heading">
                     <TextReveal
@@ -1163,7 +1124,7 @@ export function BloomingDivaExperience({
                     {topicReveal.descriptions.map(
                       ({ paragraph, blockDelay }) => (
                         <TextReveal
-                          key={`${activeContent.key}-${paragraph}`}
+                          key={paragraph}
                           text={paragraph}
                           blockDelay={blockDelay}
                         />
