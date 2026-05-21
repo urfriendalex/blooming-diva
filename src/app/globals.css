@@ -283,9 +283,9 @@ input {
   max-width: 100%;
   margin-inline: calc(-1 * var(--page-pad-x));
   box-sizing: border-box;
-  overflow-x: clip;
-  /* Room for script ascenders/descenders inside the horizontal clip strip */
-  padding-block: 0.12em;
+  /* Body already clips horizontal overflow; keep bleed overflow visible so script
+     descenders (e.g. “g”) aren’t cut once preloader-intro clears overflow overrides. */
+  overflow: visible;
   z-index: 31;
 }
 
@@ -338,14 +338,12 @@ input {
   z-index: 10055;
 }
 
-.experience--preloader:not(.experience--preloader-reveal) .experience__nav-row,
-.experience--preloader:not(.experience--preloader-reveal) .experience__meta {
+.experience--preloader:not(.experience--preloader-reveal) .experience__nav-row {
   visibility: hidden;
   opacity: 0;
 }
 
-.experience--preloader-reveal .experience__nav-row,
-.experience--preloader-reveal .experience__meta {
+.experience--preloader-reveal .experience__nav-row {
   visibility: visible;
   opacity: 1;
   transition: opacity 0.85s ease;
@@ -375,6 +373,11 @@ input {
   pointer-events: none;
 }
 
+/* Hide footer + FAB until title snap (same window as nav/main reveal). */
+main.experience--preloader:not(.experience--preloader-reveal) ~ .landing-info-panel {
+  visibility: hidden;
+}
+
 .experience__title-overline {
   position: absolute;
   top: 88%;
@@ -401,6 +404,8 @@ input {
   vertical-align: top;
   line-height: inherit;
   overflow: visible;
+  /* Script descenders extend past the line box — pad so glyphs aren't sliced after Flip. */
+  padding-block: 0.1em;
 }
 
 .experience__title-reveal-track {
@@ -409,9 +414,8 @@ input {
   text-align: inherit;
 }
 
-/* Preloader intro only — blur/scale must not be clipped by bleed overflow-x: clip (Safari). */
+/* Preloader intro — blur/scale must not be clipped by ancestor overflow (Safari). */
 .experience--preloader-intro .experience__header,
-.experience--preloader-intro .experience__title-bleed,
 .experience--preloader-intro .experience__title,
 .experience--preloader-intro .experience__title-reveal-clip {
   overflow: visible;
@@ -441,7 +445,6 @@ input {
   min-width: 0;
   position: relative;
   z-index: 30;
-  background: var(--color-bg);
   padding-block: 0.35rem;
 }
 
@@ -1704,14 +1707,9 @@ button.experience__meta--cta:focus-visible {
     text-align: center;
   }
 
-  /* Hide fixed frost UI until title snap (same window as nav/main reveal); avoids floating over the shell early. */
+  /* Hide fixed register CTA until title snap (same window as nav/main reveal). */
   .experience--preloader:not(.experience--preloader-reveal)
     .landing-panel__cta {
-    visibility: hidden;
-  }
-
-  main.experience--preloader:not(.experience--preloader-reveal)
-    ~ .landing-info-panel {
     visibility: hidden;
   }
 
