@@ -1210,19 +1210,19 @@ button.experience__meta--cta:focus-visible {
 .signup-form__spots-left {
   flex: 0 1 auto;
   margin: 0;
-  max-width: min(100%, 12rem);
+  max-width: min(100%, 14rem);
   font-family: inherit;
-  font-size: clamp(0.68rem, 0.85vw, 0.78rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: clamp(0.75rem, 0.95vw, 0.875rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
   line-height: 1.3;
   text-align: right;
-  color: var(--color-ink);
+  color: var(--color-accent);
 }
 
 .signup-form__actions .signup-form__spots-left.text-reveal {
   width: auto;
-  max-width: min(100%, 12rem);
+  max-width: min(100%, 14rem);
 }
 
 .signup-form__actions .signup-form__spots-left .text-reveal__line {
