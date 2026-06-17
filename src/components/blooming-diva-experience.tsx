@@ -261,7 +261,7 @@ export function BloomingDivaExperience({
 
   const handleHeaderMetaCtaClick = useCallback(() => {
     if (activeMode === "signup") {
-      document.getElementById("name")?.focus();
+      document.getElementById("next-photo-day-link")?.focus();
       return;
     }
     toggleRegisterMode();

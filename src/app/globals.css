@@ -1395,13 +1395,15 @@ button.experience__meta--cta:focus-visible {
   }
 }
 
-.booking-success {
+.booking-success,
+.booking-closed {
   display: grid;
   gap: 0.4rem;
   width: min(100%, 42rem);
 }
 
-.booking-success h3 {
+.booking-success h3,
+.booking-closed h3 {
   margin: 0;
   font-family: inherit;
   font-size: 0.75rem;
@@ -1410,7 +1412,8 @@ button.experience__meta--cta:focus-visible {
   letter-spacing: 0.01em;
 }
 
-.booking-success p {
+.booking-success p,
+.booking-closed p {
   margin: 0;
   color: var(--color-ink-soft);
   font-family: inherit;
@@ -1419,6 +1422,20 @@ button.experience__meta--cta:focus-visible {
   letter-spacing: 0.01em;
   line-height: 1.5;
   text-transform: none;
+}
+
+.booking-closed__link {
+  position: relative;
+  justify-self: start;
+  margin-top: 0.55rem;
+  color: var(--color-accent);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  text-transform: uppercase;
 }
 
 /* Footer details FAB: same collapsed/expanded behavior across desktop and mobile. */
@@ -1758,7 +1775,8 @@ button.experience__meta--cta:focus-visible {
 
   .apply-view__intro,
   .apply-view__form,
-  .booking-success {
+  .booking-success,
+  .booking-closed {
     width: 100%;
   }
 
@@ -1775,7 +1793,9 @@ button.experience__meta--cta:focus-visible {
   .signup-form__button,
   .signup-form__meta,
   .booking-success h3,
-  .booking-success p {
+  .booking-success p,
+  .booking-closed h3,
+  .booking-closed p {
     font-size: 0.75rem;
   }
 

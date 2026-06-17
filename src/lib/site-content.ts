@@ -44,6 +44,10 @@ export type SiteContent = {
     };
     button: string;
     helperText: string;
+    closedTitle: string;
+    closedText: string;
+    nextPhotoDayLabel: string;
+    nextPhotoDayUrl: string;
   };
   topics: TopicContent[];
 };
@@ -93,6 +97,11 @@ export const siteContent: SiteContent = {
     button: "ОСТАВИТЬ ЗАЯВКУ",
     helperText:
       "Количество мест строго ограничено. После заявки мы свяжемся с вами в Instagram.",
+    closedTitle: "Регистрация на этот фотодень закрыта",
+    closedText:
+      "Этот фотодень уже состоялся. Сейчас открыта запись на новый фотодень.",
+    nextPhotoDayLabel: "ЗАПИСАТЬСЯ НА НОВЫЙ ФОТОДЕНЬ",
+    nextPhotoDayUrl: "https://wildgrace.lizakarasiova.com/",
   },
   topics: [
     {
