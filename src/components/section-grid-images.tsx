@@ -1,10 +1,13 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { gsap } from "gsap";
 import { Flip } from "gsap/Flip";
 import type { CSSProperties } from "react";
 import type { MouseEvent } from "react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { revealAfterLines } from "@/lib/reveal-hierarchy";
 import {
@@ -31,6 +34,9 @@ type SectionGridImagesProps = {
 
 export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesProps) {
   const gridRef = useRef<HTMLDivElement | null>(null);
+  const lightboxRef = useRef<HTMLDivElement | null>(null);
+  const lightboxImageRef = useRef<HTMLImageElement | null>(null);
+  const isClosingLightboxRef = useRef(false);
   const switchRef = useRef<HTMLDivElement | null>(null);
   const switchTransitionRect = useRef<DOMRect | null>(null);
   const pinnedRef = useRef(false);
@@ -44,8 +50,41 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
   const [pinnedSlotSize, setPinnedSlotSize] = useState<{ width: number; height: number } | null>(
     null,
   );
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
   const imageListKey = images.join("\0");
   const columnOptions: GridColumnCount[] = isMobile ? [1, 2] : [2, 3, 4];
+
+  const closeImage = useCallback(() => {
+    const lightbox = lightboxRef.current;
+    const image = lightboxImageRef.current;
+
+    if (!lightbox || isClosingLightboxRef.current) {
+      setActiveImageIndex(null);
+      return;
+    }
+
+    isClosingLightboxRef.current = true;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduceMotion) {
+      setActiveImageIndex(null);
+      return;
+    }
+
+    gsap.killTweensOf([lightbox, image]);
+    gsap.to(image, {
+      opacity: 0,
+      scale: 0.96,
+      duration: 0.24,
+      ease: "power2.in",
+    });
+    gsap.to(lightbox, {
+      opacity: 0,
+      duration: 0.28,
+      ease: "power2.in",
+      onComplete: () => setActiveImageIndex(null),
+    });
+  }, []);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 720px)");
@@ -111,7 +150,97 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
     pinnedRef.current = false;
     setIsPinned(false);
     setPinnedSlotSize(null);
+    setActiveImageIndex(null);
   }, [imageListKey]);
+
+  useEffect(() => {
+    if (activeImageIndex === null) {
+      return;
+    }
+
+    const root = document.documentElement;
+    const previousRootOverflow = root.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+
+    root.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeImage();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      root.style.overflow = previousRootOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [activeImageIndex, closeImage]);
+
+  useLayoutEffect(() => {
+    if (activeImageIndex === null) {
+      isClosingLightboxRef.current = false;
+      return;
+    }
+
+    const lightbox = lightboxRef.current;
+    const image = lightboxImageRef.current;
+    if (!lightbox || !image) {
+      return;
+    }
+
+    isClosingLightboxRef.current = false;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      return;
+    }
+
+    gsap.fromTo(lightbox, { opacity: 0 }, { opacity: 1, duration: 0.32, ease: "power2.out" });
+    gsap.fromTo(
+      image,
+      { opacity: 0, scale: 0.96 },
+      { opacity: 1, scale: 1, duration: 0.42, ease: "power3.out" },
+    );
+
+    return () => {
+      gsap.killTweensOf([lightbox, image]);
+    };
+  }, [activeImageIndex]);
+
+  useLayoutEffect(() => {
+    if (activeImageIndex === null) {
+      return;
+    }
+
+    const lightbox = lightboxRef.current;
+    if (!lightbox) {
+      return;
+    }
+
+    const syncLightboxInsets = () => {
+      const header = document.querySelector(".experience__header");
+      const cta = document.querySelector(".experience__register-cta");
+      const topInset = header?.getBoundingClientRect().bottom ?? 0;
+      const bottomInset = cta
+        ? Math.max(0, window.innerHeight - cta.getBoundingClientRect().top)
+        : 0;
+
+      lightbox.style.setProperty("--lightbox-pad-top", `${topInset}px`);
+      lightbox.style.setProperty("--lightbox-pad-bottom", `${bottomInset}px`);
+    };
+
+    syncLightboxInsets();
+    window.addEventListener("resize", syncLightboxInsets);
+
+    return () => {
+      window.removeEventListener("resize", syncLightboxInsets);
+      lightbox.style.removeProperty("--lightbox-pad-top");
+      lightbox.style.removeProperty("--lightbox-pad-bottom");
+    };
+  }, [activeImageIndex]);
 
   useEffect(() => {
     if (isMobile) {
@@ -334,6 +463,16 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
     changeColumns(nextColumns);
   };
 
+  const openImage = (index: number) => {
+    setActiveImageIndex(index);
+  };
+
+  const handleLightboxBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      closeImage();
+    }
+  };
+
   const pinnedSlotStyle: CSSProperties | undefined =
     isPinned && !isMobile && pinnedSlotSize
       ? {
@@ -386,10 +525,63 @@ export function SectionGridImages({ images, firstLineIndex }: SectionGridImagesP
       >
         {images.map((image, index) => (
           <figure key={`${image}-${index}`} className="topic-detail__card">
-            <img src={image} alt="" />
+            <button
+              type="button"
+              className="topic-detail__card-button"
+              onClick={() => openImage(index)}
+              aria-label="Увеличить фото"
+            >
+              <img src={image} alt="" loading="lazy" decoding="async" />
+            </button>
           </figure>
         ))}
       </div>
+
+      {activeImageIndex !== null && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={lightboxRef}
+              className="topic-detail__lightbox"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Увеличенное фото"
+              onClick={handleLightboxBackdropClick}
+            >
+              <button
+                type="button"
+                className="topic-detail__lightbox-close interactive interactive--inverse"
+                onClick={closeImage}
+                aria-label="Закрыть"
+              >
+                <svg
+                  className="topic-detail__lightbox-close-icon"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M1.25 1.25 12.75 12.75M12.75 1.25 1.25 12.75"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+              <div className="topic-detail__lightbox-stage">
+                <img
+                  ref={lightboxImageRef}
+                  className="topic-detail__lightbox-image"
+                  src={images[activeImageIndex]}
+                  alt=""
+                  decoding="async"
+                />
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
